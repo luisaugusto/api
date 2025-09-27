@@ -98,32 +98,23 @@ export const getDateRange = (
   date: NonNullable<NotionDate>,
   allDay: boolean,
 ): { startDate: Date; endDate: Date } => {
-  let startDate = new Date(date.start);
-  let endDate: Date;
+  let start = new Date(date.start);
+  let end = new Date(date.end || start.getTime() + 60 * 60 * 1000);
 
   if (allDay) {
-    const start = new Date(date.start);
-    const startUTC = new Date(
+    start = new Date(
       Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()),
     );
 
-    let endBase: Date;
-    if (date.end) {
-      const end = new Date(date.end);
-      const endUTC = new Date(
-        Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()),
-      );
-      endBase = endUTC;
-    } else {
-      endBase = startUTC;
-    }
+    const endBase = date.end
+      ? new Date(
+          Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()),
+        )
+      : start;
 
     // For all-day events, ICS DTEND is exclusive; add one day so the last day is included.
-    startDate = startUTC;
-    endDate = new Date(endBase.getTime() + 24 * 60 * 60 * 1000);
-  } else {
-    endDate = new Date(date.end || startDate.getTime() + 60 * 60 * 1000);
+    end = new Date(endBase.getTime() + 24 * 60 * 60 * 1000);
   }
 
-  return { endDate, startDate };
+  return { endDate: end, startDate: start };
 };
