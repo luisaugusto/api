@@ -1,0 +1,121 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Notion → Mapbox Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet"/>
+  <style>
+    html, body, #map { height: 100%; margin: 0; }
+    .control {
+      position: absolute; z-index: 9999; top: 10px; left: 10px;
+      background: white; padding: 8px 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 14px;
+    }
+    .control input { width: 280px; }
+  </style>
+</head>
+<body>
+  <div class="control">
+    <label>Database ID: <input id="db" placeholder="Notion DB ID"/></label>
+    <button id="load">Load</button>
+  </div>
+  <div id="map"></div>
+
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+  <script>
+    // Read token & db from URL: ?db=...&token=...
+    const params = new URLSearchParams(location.search);
+    const initialDb = params.get("db") || "";
+    const tokenFromUrl = params.get("token");
+    const mapboxToken = tokenFromUrl || "YOUR_MAPBOX_PUBLIC_TOKEN"; // replace or pass ?token=
+
+    document.getElementById("db").value = initialDb;
+
+    mapboxgl.accessToken = mapboxToken;
+
+    const map = new mapboxgl.Map({
+      container: "map",
+      style: "mapbox://styles/mapbox/streets-v12",
+      center: [-122.4783, 37.8199],
+      zoom: 10
+    });
+
+    function boundsFor(features) {
+      const b = new mapboxgl.LngLatBounds();
+      for (const f of features) {
+        const [lng, lat] = f.geometry.coordinates;
+        if (Number.isFinite(lng) && Number.isFinite(lat)) b.extend([lng, lat]);
+      }
+      return b;
+    }
+
+    async function loadData(dbId) {
+      const url = `/api/notion-geojson?db=${encodeURIComponent(dbId)}`;
+      const res = await fetch(url);
+      if (!res.ok) { alert("Failed to load data"); return; }
+      const fc = await res.json();
+
+      if (!map.getSource("places")) {
+        map.addSource("places", { type: "geojson", data: fc });
+        map.addLayer({
+          id: "places-circles",
+          type: "circle",
+          source: "places",
+          paint: { "circle-radius": 6, "circle-color": "#3b82f6" }
+        });
+        map.addLayer({
+          id: "places-labels",
+          type: "symbol",
+          source: "places",
+          layout: {
+            "text-field": ["get", "name"],
+            "text-size": 12,
+            "text-offset": [0, 1.2],
+            "text-anchor": "top"
+          },
+          paint: { "text-halo-width": 1.5, "text-halo-color": "white" }
+        });
+
+        map.on("click", "places-circles", (e) => {
+          const f = e.features[0];
+          const { name, url, location, start, end } = f.properties || {};
+          const html = `
+            <strong>${name || "Place"}</strong>
+            ${location ? `<div>${location}</div>` : ""}
+            ${start ? `<div><small>${start}${end ? " → " + end : ""}</small></div>` : ""}
+            ${url ? `<div><a href="${url}" target="_blank">Open</a></div>` : ""}
+            <div style="margin-top:4px;">
+              <a target="_blank" href="https://maps.apple.com/?ll=${f.geometry.coordinates[1]},${f.geometry.coordinates[0]}&q=${encodeURIComponent(name || "")}">Apple Maps</a>
+              &nbsp;·&nbsp;
+              <a target="_blank" href="https://maps.google.com/?q=${f.geometry.coordinates[1]},${f.geometry.coordinates[0]}">Google Maps</a>
+            </div>
+          `;
+          new mapboxgl.Popup().setLngLat(e.lngLat).setHTML(html).addTo(map);
+        });
+      } else {
+        map.getSource("places").setData(fc);
+      }
+
+      if (fc.features?.length) {
+        const b = boundsFor(fc.features);
+        if (!b.isEmpty()) map.fitBounds(b, { padding: 40, duration: 500 });
+      }
+    }
+
+    map.on("load", () => {
+      if (initialDb) loadData(initialDb);
+      document.getElementById("load").addEventListener("click", () => {
+        const db = document.getElementById("db").value.trim();
+        if (db) {
+          const newUrl = new URL(location.href);
+          newUrl.searchParams.set("db", db);
+          if (tokenFromUrl) newUrl.searchParams.set("token", tokenFromUrl);
+          history.replaceState({}, "", newUrl);
+          loadData(db);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

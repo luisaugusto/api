@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    { "source": "/calendar.ics", "destination": "/api/calendar" },
+    { "source": "/map", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "X-Frame-Options", "value": "ALLOWALL" }]
+    }
+  ]
+}
