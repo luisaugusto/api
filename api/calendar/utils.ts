@@ -2,15 +2,12 @@ import {
   CalendarProp,
   NotionDate,
   NotionPropertyValue,
+  NotionResponse,
   Props,
   emoji,
 } from "./types.js";
-import type {
-  PageObjectResponse,
-  PartialDatabaseObjectResponse,
-  PartialPageObjectResponse,
-} from "@notionhq/client/build/src/api-endpoints.js";
 import { Client } from "@notionhq/client";
+import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints.js";
 
 export const isValidEvent = (
   props: Props,
@@ -69,17 +66,17 @@ export const getProps = (
 
 export const fetchAllPages = async (
   database_id: string,
-  pages: (PartialPageObjectResponse | PartialDatabaseObjectResponse)[] = [],
+  pages: NotionResponse[] = [],
   start_cursor?: string,
-): Promise<(PartialPageObjectResponse | PartialDatabaseObjectResponse)[]> => {
+): Promise<NotionResponse[]> => {
   const auth = process.env.NOTION_TOKEN;
   if (!auth) {
     throw new Error("Missing NOTION_TOKEN environment variable");
   }
   const notion = new Client({ auth });
 
-  const resp = await notion.databases.query({
-    database_id,
+  const resp = await notion.dataSources.query({
+    data_source_id: database_id,
     ...(start_cursor ? { start_cursor } : {}),
   });
 

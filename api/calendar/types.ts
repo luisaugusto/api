@@ -1,4 +1,9 @@
-import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints.js";
+import type {
+  DataSourceObjectResponse,
+  PageObjectResponse,
+  PartialDataSourceObjectResponse,
+  PartialPageObjectResponse,
+} from "@notionhq/client/build/src/api-endpoints.js";
 
 export enum CalendarProp {
   Status = "Status",
@@ -13,6 +18,11 @@ export enum CalendarProp {
 
 export type NotionPropertyValue = PageObjectResponse["properties"][string];
 export type NotionDate = Extract<NotionPropertyValue, { type: "date" }>["date"];
+export type NotionResponse =
+  | PageObjectResponse
+  | PartialPageObjectResponse
+  | PartialDataSourceObjectResponse
+  | DataSourceObjectResponse;
 
 export interface Props {
   allDay: boolean;

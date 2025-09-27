@@ -1,7 +1,3 @@
-import {
-  PartialDatabaseObjectResponse,
-  PartialPageObjectResponse,
-} from "@notionhq/client/build/src/api-endpoints.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   fetchAllPages,
@@ -14,12 +10,10 @@ import ical, {
   ICalCalendar,
   ICalCalendarMethod,
 } from "ical-generator";
+import { NotionResponse } from "./types.js";
 import { isFullPage } from "@notionhq/client";
 
-const createEvent = (
-  page: PartialPageObjectResponse | PartialDatabaseObjectResponse,
-  cal: ICalCalendar,
-): void => {
+const createEvent = (page: NotionResponse, cal: ICalCalendar): void => {
   if (!isFullPage(page)) return;
 
   const props = getProps(page.properties);
