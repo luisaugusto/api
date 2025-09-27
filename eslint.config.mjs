@@ -14,6 +14,7 @@ export default defineConfig(
       camelcase: ["off"],
       "capitalized-comments": ["off"],
       complexity: ["error", { max: 50 }],
+      "init-declarations": ["off"],
       "max-lines-per-function": ["error", 200],
       "max-statements": ["error", 100],
       "no-console": ["off"],
