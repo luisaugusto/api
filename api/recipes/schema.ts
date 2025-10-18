@@ -88,4 +88,8 @@ export default zod.object({
       "Number of servings that the recipe makes and portion description.",
   }),
   title: zod.string({ description: "Title of the recipe" }),
+  tldr: zod.string({
+    description:
+      "A brief summary and explanation of the recipe in 1-2 sentences for a general response to the prompt.",
+  }),
 });

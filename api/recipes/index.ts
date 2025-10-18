@@ -164,10 +164,7 @@ export default async function handler(
     const { cover, recipe } = await generateRecipeWithImage(validation.prompt);
     await createRecipe(recipe, cover, validation.database_id);
 
-    res.status(200).json({
-      message: "Recipe created successfully",
-      title: recipe.title,
-    });
+    res.status(200).json(recipe.tldr);
   } catch (error) {
     res.status(500).json({
       detail: String(error),

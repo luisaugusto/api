@@ -110,10 +110,7 @@ export default async function handler(
     const response = await generateTip(validation.prompt);
     await createTip(response, validation.database_id);
 
-    res.status(200).json({
-      message: "Spanish tip created successfully",
-      title: response.title,
-    });
+    res.status(200).json(response.tldr);
   } catch (error) {
     res.status(500).json({
       detail: String(error),

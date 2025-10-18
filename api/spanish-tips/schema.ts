@@ -43,6 +43,10 @@ export default zod.object({
   title: zod.string({
     description: "A concise title for the tip, ideally 5-10 words.",
   }),
+  tldr: zod.string({
+    description:
+      "A brief summary of the explanation in 1-2 sentences for a general response to the prompt.",
+  }),
   uses: zod.string({
     description:
       "Put the tip into practice by providing 2-3 spanish sentences or phrases that show the tip in use in a markdown format.",
