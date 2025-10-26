@@ -7,8 +7,8 @@ import type { Block } from "@tryfabric/martian/build/src/notion/blocks.js";
 import Tip from "./schema.js";
 import { generateData } from "../shared/openai.js";
 import { markdownToBlocks } from "@tryfabric/martian";
-import { zodTextFormat } from "openai/helpers/zod";
 import { waitUntil } from "@vercel/functions";
+import { zodTextFormat } from "openai/helpers/zod";
 
 const format = zodTextFormat(Tip, "tip");
 
@@ -29,7 +29,6 @@ const createTip = async (
   response: typeof format.__output,
   database_id: string,
 ): Promise<void> => {
-  console.log("Creating Spanish tip in Notion database:", database_id);
   const blocks = createBlocks(response);
 
   await createNotionPage({
@@ -67,7 +66,6 @@ const createTip = async (
       },
     },
   });
-  console.log("Spanish tip created successfully.");
 };
 
 const validateParams = (
@@ -84,14 +82,12 @@ const validateParams = (
 };
 
 const generateTip = async (prompt: string): Promise<typeof format.__output> => {
-  console.log("Generating tip with prompt:", prompt);
   const response = await generateData({
     format,
     input: prompt,
     instructions:
       "You are a positive and cheerful spanish language tutor that provides tips to help people learn Spanish. Each tip should be clear, and practical with enough information for me to learn the concept that is being discussed.",
   });
-  console.log("Generated tip:", response);
 
   if (!response) {
     throw new Error("No parsed data returned.");
@@ -110,12 +106,9 @@ export default function handler(req: VercelRequest, res: VercelResponse): void {
     }
 
     waitUntil(
-      generateTip(validation.prompt)
-        .then((tip) => createTip(tip, validation.database_id))
-        .catch((error) => {
-          console.error("Error creating Spanish tip:", error);
-          throw error;
-        }),
+      generateTip(validation.prompt).then((tip) =>
+        createTip(tip, validation.database_id),
+      ),
     );
 
     res.status(200).json("Spanish tip creation in progress.");
