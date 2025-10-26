@@ -7,6 +7,7 @@ import type { Block } from "@tryfabric/martian/build/src/notion/blocks.js";
 import Tip from "./schema.js";
 import { generateData } from "../shared/openai.js";
 import { markdownToBlocks } from "@tryfabric/martian";
+import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
 
 const format = zodTextFormat(Tip, "tip");
@@ -95,10 +96,7 @@ const generateTip = async (prompt: string): Promise<typeof format.__output> => {
   return response;
 };
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-): Promise<void> {
+export default function handler(req: VercelRequest, res: VercelResponse): void {
   try {
     const validation = validateParams(req.query.db, req.query.prompt);
 
@@ -107,10 +105,13 @@ export default async function handler(
       return;
     }
 
-    const response = await generateTip(validation.prompt);
-    await createTip(response, validation.database_id);
+    waitUntil(
+      generateTip(validation.prompt).then((tip) =>
+        createTip(tip, validation.database_id),
+      ),
+    );
 
-    res.status(200).json(response.tldr);
+    res.status(200).json("Spanish tip creation in progress.");
   } catch (error) {
     res.status(500).json({
       detail: String(error),

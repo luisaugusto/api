@@ -12,6 +12,7 @@ import { generateData, generateImage } from "../shared/openai.js";
 import { markdownToBlocks, markdownToRichText } from "@tryfabric/martian";
 import type { CreatePageParameters } from "@notionhq/client";
 import Recipe from "./schema.js";
+import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
 
 const format = zodTextFormat(Recipe, "recipe");
@@ -149,10 +150,7 @@ const generateRecipeWithImage = async (
   return { cover, recipe };
 };
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-): Promise<void> {
+export default function handler(req: VercelRequest, res: VercelResponse): void {
   try {
     const validation = validateParams(req.query.db, req.query.prompt);
 
@@ -161,10 +159,13 @@ export default async function handler(
       return;
     }
 
-    const { cover, recipe } = await generateRecipeWithImage(validation.prompt);
-    await createRecipe(recipe, cover, validation.database_id);
+    waitUntil(
+      generateRecipeWithImage(validation.prompt).then(({ cover, recipe }) =>
+        createRecipe(recipe, cover, validation.database_id),
+      ),
+    );
 
-    res.status(200).json(recipe.tldr);
+    res.status(200).json("Recipe creation in progress.");
   } catch (error) {
     res.status(500).json({
       detail: String(error),
