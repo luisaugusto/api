@@ -8,6 +8,7 @@ import Tip from "./schema.js";
 import { generateData } from "../shared/openai.js";
 import { markdownToBlocks } from "@tryfabric/martian";
 import { zodTextFormat } from "openai/helpers/zod";
+import { waitUntil } from "@vercel/functions";
 
 const format = zodTextFormat(Tip, "tip");
 
@@ -28,6 +29,7 @@ const createTip = async (
   response: typeof format.__output,
   database_id: string,
 ): Promise<void> => {
+  console.log("Creating Spanish tip in Notion database:", database_id);
   const blocks = createBlocks(response);
 
   await createNotionPage({
@@ -65,6 +67,7 @@ const createTip = async (
       },
     },
   });
+  console.log("Spanish tip created successfully.");
 };
 
 const validateParams = (
@@ -81,12 +84,14 @@ const validateParams = (
 };
 
 const generateTip = async (prompt: string): Promise<typeof format.__output> => {
+  console.log("Generating tip with prompt:", prompt);
   const response = await generateData({
     format,
     input: prompt,
     instructions:
       "You are a positive and cheerful spanish language tutor that provides tips to help people learn Spanish. Each tip should be clear, and practical with enough information for me to learn the concept that is being discussed.",
   });
+  console.log("Generated tip:", response);
 
   if (!response) {
     throw new Error("No parsed data returned.");
@@ -95,10 +100,7 @@ const generateTip = async (prompt: string): Promise<typeof format.__output> => {
   return response;
 };
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-): Promise<void> {
+export default function handler(req: VercelRequest, res: VercelResponse): void {
   try {
     const validation = validateParams(req.query.db, req.query.prompt);
 
@@ -107,10 +109,16 @@ export default async function handler(
       return;
     }
 
-    const response = await generateTip(validation.prompt);
-    await createTip(response, validation.database_id);
+    waitUntil(
+      generateTip(validation.prompt)
+        .then((tip) => createTip(tip, validation.database_id))
+        .catch((error) => {
+          console.error("Error creating Spanish tip:", error);
+          throw error;
+        }),
+    );
 
-    res.status(200).json(response.tldr);
+    res.status(200).json("Spanish tip creation in progress.");
   } catch (error) {
     res.status(500).json({
       detail: String(error),
