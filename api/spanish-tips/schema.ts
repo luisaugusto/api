@@ -8,9 +8,9 @@ export default zod.object({
     "🟫 Pronunciation & Listening",
     "🟪 Cultural / Regional Variation",
   ]),
-  explanation: zod.string({
-    description: "A clear explanation of the tip in a markdown format.",
-  }),
+  explanation: zod
+    .string()
+    .describe("A clear explanation of the tip in a markdown format."),
   level: zod.enum([
     "🟢 A1: Beginner",
     "🟡 A2:Elementary",
@@ -19,10 +19,11 @@ export default zod.object({
     "🔴 C1: Advanced",
     "⚫ C2: Proficient",
   ]),
-  practicePrompt: zod.string({
-    description:
+  practicePrompt: zod
+    .string()
+    .describe(
       "Give a homework prompt for the user so that they can practice the tip. You can use markdown formatting for emphasis.",
-  }),
+    ),
   subcategory: zod.enum([
     "Verb Conjugation",
     "Verb Usage / Meaning Differences",
@@ -40,15 +41,17 @@ export default zod.object({
     "Regional Usage",
     "Cultural Notes",
   ]),
-  title: zod.string({
-    description: "A concise title for the tip, ideally 5-10 words.",
-  }),
-  tldr: zod.string({
-    description:
+  title: zod
+    .string()
+    .describe("A concise title for the tip, ideally 5-10 words."),
+  tldr: zod
+    .string()
+    .describe(
       "A brief summary of the explanation in 1-2 sentences for a general response to the prompt.",
-  }),
-  uses: zod.string({
-    description:
+    ),
+  uses: zod
+    .string()
+    .describe(
       "Put the tip into practice by providing 2-3 spanish sentences or phrases that show the tip in use in a markdown format.",
-  }),
+    ),
 });
