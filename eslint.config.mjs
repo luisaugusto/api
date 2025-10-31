@@ -11,6 +11,7 @@ export default defineConfig(
   {
     rules: {
       "@typescript-eslint/explicit-function-return-type": "error",
+      "@typescript-eslint/unified-signatures": "off",
       camelcase: ["off"],
       "init-declarations": ["off"],
       "no-magic-numbers": ["off"],
