@@ -10,13 +10,30 @@ export enum CalendarProp {
   AllDay = "AllDay",
   Date = "Date",
   Category = "Category",
-  Location = "Location",
+  Place = "Place",
   URL = "URL",
   Notes = "Notes",
   Name = "Name",
 }
 
-export type NotionPropertyValue = PageObjectResponse["properties"][string];
+// @TODO: When Notion adds official Place property support, remove this custom type
+export interface NotionPlace {
+  lat: number;
+  lon: number;
+  name: string;
+  address: string;
+  aws_place_id: string | null;
+  google_place_id: string | null;
+}
+
+export interface PlacePropertyValue {
+  id: string;
+  type: "place";
+  place: NotionPlace | null;
+}
+
+type CoreNotionPropertyValue = PageObjectResponse["properties"][string];
+export type NotionPropertyValue = CoreNotionPropertyValue | PlacePropertyValue;
 export type NotionDate = Extract<NotionPropertyValue, { type: "date" }>["date"];
 export type NotionResponse =
   | PageObjectResponse
@@ -28,7 +45,7 @@ export interface Props {
   allDay: boolean;
   category: string | undefined;
   date: NotionDate | undefined;
-  location: string;
+  place: NotionPlace | null | undefined;
   notes: string;
   status: string;
   url: string | null;

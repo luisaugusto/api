@@ -43,10 +43,7 @@ export const getProps = (
   const date = getProp(properties, CalendarProp.Date, "date")?.date;
   const category = getProp(properties, CalendarProp.Category, "select")?.select
     ?.name;
-  const location =
-    getProp(properties, CalendarProp.Location, "rich_text")
-      ?.rich_text.map((text) => text.plain_text)
-      .join("") ?? "";
+  const place = getProp(properties, CalendarProp.Place, "place")?.place;
   const url = getProp(properties, CalendarProp.URL, "url")?.url ?? null;
   const notes =
     getProp(properties, CalendarProp.Notes, "rich_text")
@@ -61,7 +58,16 @@ export const getProps = (
         .join(""),
     );
 
-  return { allDay, category, date, location, notes, status, title, url };
+  return {
+    allDay,
+    category,
+    date,
+    notes,
+    place,
+    status,
+    title,
+    url,
+  };
 };
 
 export const fetchAllPages = async (
