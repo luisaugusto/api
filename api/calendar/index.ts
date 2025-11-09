@@ -27,7 +27,13 @@ const createEvent = (page: NotionResponse, cal: ICalCalendar): void => {
     allDay: props.allDay,
     description: props.notes,
     end: endDate,
-    location: props.location,
+    location: props.place
+      ? {
+          address: props.place.address,
+          geo: { lat: props.place.lat, lon: props.place.lon },
+          title: props.place.name,
+        }
+      : null,
     start: startDate,
     summary: props.title,
     timezone: date.time_zone,
