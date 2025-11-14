@@ -15,26 +15,13 @@ export enum CalendarProp {
   Notes = "Notes",
   Name = "Name",
 }
-
-// @TODO: When Notion adds official Place property support, remove this custom type
-export interface NotionPlace {
-  lat: number;
-  lon: number;
-  name: string;
-  address: string;
-  aws_place_id: string | null;
-  google_place_id: string | null;
-}
-
-export interface PlacePropertyValue {
-  id: string;
-  type: "place";
-  place: NotionPlace | null;
-}
-
-type CoreNotionPropertyValue = PageObjectResponse["properties"][string];
-export type NotionPropertyValue = CoreNotionPropertyValue | PlacePropertyValue;
+export type NotionPropertyValue = PageObjectResponse["properties"][string];
 export type NotionDate = Extract<NotionPropertyValue, { type: "date" }>["date"];
+export type NotionPlace = Extract<
+  NotionPropertyValue,
+  { type: "place" }
+>["place"];
+
 export type NotionResponse =
   | PageObjectResponse
   | PartialPageObjectResponse

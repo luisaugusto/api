@@ -16,6 +16,7 @@ export default defineConfig(
       "init-declarations": ["off"],
       "no-magic-numbers": ["off"],
       "no-ternary": ["off"],
+      "no-undefined": "off",
       "one-var": ["error", "never"],
     },
   },
