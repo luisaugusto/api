@@ -29,9 +29,9 @@ const createEvent = (page: NotionResponse, cal: ICalCalendar): void => {
     end: endDate,
     location: props.place
       ? {
-          address: props.place.address,
+          address: props.place.address ? props.place.address : undefined,
           geo: { lat: props.place.lat, lon: props.place.lon },
-          title: props.place.name,
+          title: props.place.name ? props.place.name : undefined,
         }
       : null,
     start: startDate,
