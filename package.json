@@ -15,7 +15,7 @@
     "@vercel/node": "^5.5.16",
     "ical-generator": "^10.0.0",
     "openai": "^6.15.0",
-    "undici": "^7.16.0",
+    "undici": "^7.17.0",
     "zod": "^4.2.1"
   },
   "devDependencies": {
