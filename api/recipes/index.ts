@@ -4,6 +4,7 @@ import type {
 } from "@tryfabric/martian/build/src/notion/blocks.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
+  addCommentToNotionPage,
   convertToBlockObjectRequest,
   createNotionPage,
   uploadImageToNotion,
@@ -71,8 +72,7 @@ const createRecipe = async (
   database_id: string,
 ): Promise<void> => {
   const { blocks, ingredientsRT, nutritionRT } = buildInformation(recipe);
-
-  await createNotionPage({
+  const pageId = await createNotionPage({
     children: convertToBlockObjectRequest(blocks),
     cover: cover ?? null,
     database_id,
@@ -106,6 +106,11 @@ const createRecipe = async (
         rich_text: [{ text: { content: recipe.servingSize } }],
       },
     },
+  });
+  await addCommentToNotionPage({
+    mentionUserId: process.env.NOTION_USER_ID || "",
+    message: "your recipe has been created!",
+    pageId,
   });
 };
 
@@ -146,7 +151,6 @@ const generateRecipeWithImage = async (
     file_upload: { id: fileUploadId },
     type: "file_upload",
   };
-
   return { cover, recipe };
 };
 

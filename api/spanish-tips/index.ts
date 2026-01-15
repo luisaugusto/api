@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
+  addCommentToNotionPage,
   convertToBlockObjectRequest,
   createNotionPage,
 } from "../shared/notion.js";
@@ -31,7 +32,7 @@ const createTip = async (
 ): Promise<void> => {
   const blocks = createBlocks(response);
 
-  await createNotionPage({
+  const pageId = await createNotionPage({
     children: convertToBlockObjectRequest(blocks),
     database_id,
     properties: {
@@ -65,6 +66,12 @@ const createTip = async (
         },
       },
     },
+  });
+
+  await addCommentToNotionPage({
+    mentionUserId: process.env.NOTION_USER_ID || "",
+    message: "your Spanish tip has been created!",
+    pageId,
   });
 };
 
