@@ -103,13 +103,16 @@ export const createNotionPage = async ({
 
 export const addCommentToNotionPage = async ({
   pageId,
-  mentionUserId,
   message,
 }: {
   pageId: string;
-  mentionUserId: string;
   message: string;
 }): Promise<void> => {
+  const userId = process.env.NOTION_USER_ID;
+  if (userId === undefined) {
+    throw new Error("NOTION_USER_ID is not defined in environment variables");
+  }
+
   try {
     const notion = getNotionClient();
     await notion.comments.create({
@@ -117,7 +120,7 @@ export const addCommentToNotionPage = async ({
       rich_text: [
         { text: { content: "Hey " }, type: "text" },
         {
-          mention: { type: "user", user: { id: mentionUserId } },
+          mention: { type: "user", user: { id: userId } },
           type: "mention",
         },
         { text: { content: `, ${message}` }, type: "text" },

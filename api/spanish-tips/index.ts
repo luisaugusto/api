@@ -69,7 +69,6 @@ const createTip = async (
   });
 
   await addCommentToNotionPage({
-    mentionUserId: process.env.NOTION_USER_ID || "",
     message: "your Spanish tip has been created!",
     pageId,
   });

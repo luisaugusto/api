@@ -108,7 +108,6 @@ const createRecipe = async (
     },
   });
   await addCommentToNotionPage({
-    mentionUserId: process.env.NOTION_USER_ID || "",
     message: "your recipe has been created!",
     pageId,
   });
