@@ -36,7 +36,11 @@ const uploadFileToNotion = async (
   filename: string,
 ): Promise<void> => {
   const form = new FormData();
-  form.append("file", new Blob([imageBuffer], { type: "image/png" }), filename);
+  form.append(
+    "file",
+    new Blob([new Uint8Array(imageBuffer)], { type: "image/png" }),
+    filename,
+  );
 
   const res = await fetch(
     `https://api.notion.com/v1/file_uploads/${fileUploadId}/send`,
@@ -82,16 +86,47 @@ export const createNotionPage = async ({
     Parameters<typeof Client.prototype.pages.create>[0]["properties"]
   >;
   cover?: CreatePageParameters["cover"];
-}): Promise<void> => {
+}): Promise<string> => {
   try {
     const notion = getNotionClient();
-    await notion.pages.create({
+    const created = await notion.pages.create({
       children,
       cover: cover ?? null,
       parent: { database_id },
       properties,
     });
+    return created.id;
   } catch (err) {
     throw new Error(`Failed to create Notion page`, { cause: err });
+  }
+};
+
+export const addCommentToNotionPage = async ({
+  pageId,
+  message,
+}: {
+  pageId: string;
+  message: string;
+}): Promise<void> => {
+  const userId = process.env.NOTION_USER_ID;
+  if (userId === undefined) {
+    throw new Error("NOTION_USER_ID is not defined in environment variables");
+  }
+
+  try {
+    const notion = getNotionClient();
+    await notion.comments.create({
+      parent: { page_id: pageId },
+      rich_text: [
+        { text: { content: "Hey " }, type: "text" },
+        {
+          mention: { type: "user", user: { id: userId } },
+          type: "mention",
+        },
+        { text: { content: `, ${message}` }, type: "text" },
+      ],
+    });
+  } catch (err) {
+    throw new Error(`Failed to add Notion comment`, { cause: err });
   }
 };
