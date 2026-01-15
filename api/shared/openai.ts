@@ -10,7 +10,7 @@ export const generateImage = async (prompt: string): Promise<string> => {
 
   try {
     const imageResult = await openai.images.generate({
-      model: "gpt-image-1",
+      model: "gpt-image-1.5",
       prompt,
       size: "1024x1024",
     });
@@ -38,7 +38,7 @@ export const generateData = async <T extends ResponseFormatTextConfig>({
       ExtractParsedContentFromParams<{
         input: string;
         instructions: string;
-        model: "gpt-5";
+        model: "gpt-5.1-mini";
         text: { format: T };
       }>
     >
@@ -50,7 +50,7 @@ export const generateData = async <T extends ResponseFormatTextConfig>({
     const response = await openai.responses.parse({
       input,
       instructions,
-      model: "gpt-5",
+      model: "gpt-5.1-mini",
       text: { format },
     });
 
