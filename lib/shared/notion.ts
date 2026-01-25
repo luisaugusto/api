@@ -211,7 +211,7 @@ export const verifyDatabaseAccess = async (
     }
     console.log(page);
     const pageDatabase =
-      page.parent.type === "database_id" ? page.parent.database_id : null;
+      page.parent.type === "data_source_id" ? page.parent.database_id : null;
     console.log(pageDatabase, expectedDatabaseId);
     return pageDatabase === expectedDatabaseId;
   } catch (err) {
