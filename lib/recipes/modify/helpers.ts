@@ -57,7 +57,7 @@ export const validateWebhookPayload = (
   payload: unknown,
 ): payload is NotionWebhookPayload => {
   // eslint-disable-next-line no-console
-  console.log("Webhook validation starting");
+  console.log("Webhook validation starting", payload);
 
   if (!payload || typeof payload !== "object") {
     // eslint-disable-next-line no-console
