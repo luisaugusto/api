@@ -8,11 +8,11 @@ import {
   convertToBlockObjectRequest,
   createNotionPage,
   uploadImageToNotion,
-} from "../shared/notion.js";
-import { generateData, generateImage } from "../shared/openai.js";
+} from "../../lib/shared/notion.js";
+import { generateData, generateImage } from "../../lib/shared/openai.js";
 import { markdownToBlocks, markdownToRichText } from "@tryfabric/martian";
 import type { CreatePageParameters } from "@notionhq/client";
-import Recipe from "./schema.js";
+import Recipe from "../../lib/recipes/schema.js";
 import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
 

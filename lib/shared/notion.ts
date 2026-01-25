@@ -4,7 +4,7 @@ import {
   type CreatePageParameters,
 } from "@notionhq/client";
 import type { Block } from "@tryfabric/martian/build/src/notion/blocks.js";
-import { slugify } from "./utils.js";
+import { slugify } from "../../api/shared/utils.js";
 import undici from "undici";
 
 const { FormData } = undici;
