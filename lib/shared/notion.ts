@@ -172,6 +172,20 @@ export const updatePageBlocks = async (
 ): Promise<void> => {
   try {
     const notion = getNotionClient();
+
+    // Get existing blocks
+    const existingBlocks = await notion.blocks.children.list({
+      block_id: pageId,
+    });
+
+    // Delete existing blocks
+    for (const block of existingBlocks.results) {
+      if ("id" in block) {
+        await notion.blocks.delete({ block_id: block.id });
+      }
+    }
+
+    // Add new blocks
     const blockObjectRequests = convertToBlockObjectRequest(blocks);
     await notion.blocks.children.append({
       block_id: pageId,
