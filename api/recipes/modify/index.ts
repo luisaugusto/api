@@ -1,5 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
+  buildBodyBlocks,
+  convertNotionPropertiesToRecipe,
+} from "../../../lib/shared/recipes.js";
+import {
   buildModificationPrompt,
   extractIds,
   extractModificationRequest,
@@ -12,10 +16,10 @@ import {
   fetchPage,
   postComment,
   updatePage,
+  updatePageBlocks,
   verifyDatabaseAccess,
 } from "../../../lib/shared/notion.js";
 import Recipe from "../../../lib/recipes/schema.js";
-import { convertNotionPropertiesToRecipe } from "../../../lib/shared/recipes.js";
 import { generateData } from "../../../lib/shared/openai.js";
 import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
@@ -47,6 +51,9 @@ const updateRecipeAndComment = async (
     pageId,
     notionProperties as Parameters<typeof updatePage>[1],
   );
+
+  const bodyBlocks = buildBodyBlocks(updatedRecipe);
+  await updatePageBlocks(pageId, bodyBlocks);
 
   const summaryMessage =
     updatedRecipe.changeDescription ??

@@ -7,6 +7,7 @@ import {
   isFullPage,
 } from "@notionhq/client";
 import type { Block } from "@tryfabric/martian/build/src/notion/blocks.js";
+import { markdownToRichText } from "@tryfabric/martian";
 import { slugify } from "./utils.js";
 import undici from "undici";
 
@@ -165,6 +166,22 @@ export const updatePage = async (
   }
 };
 
+export const updatePageBlocks = async (
+  pageId: string,
+  blocks: Block[],
+): Promise<void> => {
+  try {
+    const notion = getNotionClient();
+    const blockObjectRequests = convertToBlockObjectRequest(blocks);
+    await notion.blocks.children.append({
+      block_id: pageId,
+      children: blockObjectRequests,
+    });
+  } catch (err) {
+    throw new Error(`Failed to update page blocks`, { cause: err });
+  }
+};
+
 export const fetchComment = async (commentId: string): Promise<string> => {
   try {
     const notion = getNotionClient();
@@ -243,19 +260,21 @@ interface RecipeInput {
 const buildIngredientsList = (
   ingredients: { ingredient: string; quantity: string }[],
 ): Record<string, unknown> => ({
-  rich_text: ingredients.map((ing) => ({
-    text: { content: `**${ing.ingredient}** - ${ing.quantity}` },
-    type: "text",
-  })),
+  rich_text: markdownToRichText(
+    ingredients
+      .map((ing) => `**${ing.ingredient}** - ${ing.quantity}`)
+      .join("\n"),
+  ),
 });
 
 const buildNutritionList = (
   otherNutrition: { item: string; quantity: string }[],
 ): Record<string, unknown> => ({
-  rich_text: otherNutrition.map((item) => ({
-    text: { content: `**${item.item}** - ${item.quantity}` },
-    type: "text",
-  })),
+  rich_text: markdownToRichText(
+    otherNutrition
+      .map((item) => `**${item.item}** - ${item.quantity}`)
+      .join("\n"),
+  ),
 });
 
 // Build Notion page properties from recipe data

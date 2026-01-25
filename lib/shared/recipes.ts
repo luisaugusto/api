@@ -1,4 +1,6 @@
+import type { Block } from "@tryfabric/martian/build/src/notion/blocks.js";
 import Recipe from "../recipes/schema.js";
+import { markdownToBlocks } from "@tryfabric/martian";
 import { zodTextFormat } from "openai/helpers/zod";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -126,6 +128,12 @@ const buildRecipeObject = (
     title: getStringProp(properties.Name),
     tldr: "",
   }) as RecipeType;
+
+export const buildBodyBlocks = (recipe: RecipeType): Block[] =>
+  markdownToBlocks(`# Preparation
+${recipe.preparation.map((step, index) => `${index + 1}. ${step}`).join("\n")}
+# Instructions
+${recipe.instructions.map((step, index) => `${index + 1}. ${step}`).join("\n")}`);
 
 export const convertNotionPropertiesToRecipe = (
   properties: Record<string, unknown>,
