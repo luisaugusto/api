@@ -5,14 +5,15 @@ import type {
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   addCommentToNotionPage,
+  buildRecipeNotionProperties,
   convertToBlockObjectRequest,
   createNotionPage,
   uploadImageToNotion,
-} from "../shared/notion.js";
-import { generateData, generateImage } from "../shared/openai.js";
+} from "../../lib/shared/notion.js";
+import { generateData, generateImage } from "../../lib/shared/openai.js";
 import { markdownToBlocks, markdownToRichText } from "@tryfabric/martian";
 import type { CreatePageParameters } from "@notionhq/client";
-import Recipe from "./schema.js";
+import Recipe from "../../lib/recipes/schema.js";
 import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
 
@@ -72,39 +73,16 @@ const createRecipe = async (
   database_id: string,
 ): Promise<void> => {
   const { blocks, ingredientsRT, nutritionRT } = buildInformation(recipe);
+  const recipeProperties = buildRecipeNotionProperties(recipe);
   const pageId = await createNotionPage({
     children: convertToBlockObjectRequest(blocks),
     cover: cover ?? null,
     database_id,
     properties: {
-      Allergies: {
-        multi_select: recipe.allergies.map((allergy) => ({ name: allergy })),
-      },
-      "Calories (cal)": { number: recipe.calories },
-      "Carbs (g)": { number: recipe.carbs },
-      "Cook Time (min)": { number: recipe.cookTime },
-      "Country of Origin": { select: { name: recipe.country } },
-      Description: {
-        rich_text: [{ text: { content: recipe.description } }],
-      },
-      Diet: { multi_select: recipe.diet.map((item) => ({ name: item })) },
-      Difficulty: { select: { name: recipe.difficulty } },
-      "Fat (g)": { number: recipe.fat },
-      "Fiber (g)": { number: recipe.fiber },
+      ...recipeProperties,
       Ingredients: { rich_text: ingredientsRT },
-      "Meal Type": {
-        multi_select: recipe.mealType.map((type) => ({ name: type })),
-      },
       Name: { title: [{ text: { content: recipe.title } }] },
       "Nutrition Facts": { rich_text: nutritionRT },
-      "Prep Time (min)": { number: recipe.prepTime },
-      "Protein (g)": { number: recipe.protein },
-      "Protein Type": {
-        multi_select: recipe.proteinType.map((type) => ({ name: type })),
-      },
-      "Serving Size": {
-        rich_text: [{ text: { content: recipe.servingSize } }],
-      },
     },
   });
   await addCommentToNotionPage({

@@ -8,6 +8,13 @@ export default zod.object({
     ),
   calories: zod.number().describe("Calories (cal)."),
   carbs: zod.number().describe("Carbohydrates in grams (g)."),
+  changeDescription: zod
+    .string()
+    .optional()
+    .nullable()
+    .describe(
+      "Summary of changes made to the recipe in the most recent update.",
+    ),
   cookTime: zod.number().describe("Cooking time in minutes."),
   country: zod
     .string()
