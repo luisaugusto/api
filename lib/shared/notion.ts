@@ -212,6 +212,7 @@ export const verifyDatabaseAccess = async (
 
     const pageDatabase = ((pageData.parent as { database_id?: string }) || {})
       .database_id;
+    console.log(page);
     return pageDatabase === expectedDatabaseId;
   } catch (err) {
     throw new Error(`Failed to verify database access`, { cause: err });
