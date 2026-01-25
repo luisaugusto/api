@@ -209,9 +209,10 @@ export const verifyDatabaseAccess = async (
     if (!isFullPage(page)) {
       throw new Error("Fetched page is not a full page object");
     }
-
+    console.log(page);
     const pageDatabase =
       page.parent.type === "database_id" ? page.parent.database_id : null;
+    console.log(pageDatabase, expectedDatabaseId);
     return pageDatabase === expectedDatabaseId;
   } catch (err) {
     throw new Error(`Failed to verify database access`, { cause: err });
