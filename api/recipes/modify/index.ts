@@ -14,6 +14,7 @@ import {
 import {
   fetchComment,
   fetchPage,
+  fetchPageBlocks,
   postComment,
   updatePage,
   updatePageBlocks,
@@ -78,8 +79,11 @@ const processRecipeModification = async (
   }
 
   const page = await fetchPage(pageId);
-  const currentRecipe = convertNotionPropertiesToRecipe(page.properties);
-  console.log("page and recipe", page, currentRecipe);
+  const blockContent = await fetchPageBlocks(pageId);
+  const currentRecipe = convertNotionPropertiesToRecipe(
+    page.properties,
+    blockContent,
+  );
   const modificationRequest = extractModificationRequest(commentText);
 
   await updateRecipeAndComment(pageId, currentRecipe, modificationRequest);

@@ -95,19 +95,50 @@ export const parseNutrition = (
     })
     .filter((item) => item.item);
 
+// Parse preparation and instructions from block content
+const parseBlocksContent = (
+  blockContent: string,
+): { preparation: string[]; instructions: string[] } => {
+  const preparation: string[] = [];
+  const instructions: string[] = [];
+  let currentSection = "";
+
+  const lines = blockContent.split("\n").filter((line) => line.trim());
+
+  for (const line of lines) {
+    if (line.includes("Preparation")) {
+      currentSection = "preparation";
+    } else if (line.includes("Instructions")) {
+      currentSection = "instructions";
+    } else if (line.startsWith("- ")) {
+      const step = line.slice(2).trim();
+      if (currentSection === "preparation") {
+        preparation.push(step);
+      } else if (currentSection === "instructions") {
+        instructions.push(step);
+      }
+    }
+  }
+
+  return { instructions, preparation };
+};
+
 // Extract recipe properties from Notion
-const buildRecipeObject = (
-  ingredients: {
-    ingredient: string;
-    quantity: string;
-  }[],
-  otherNutrition: {
-    item: string;
-    quantity: string;
-  }[],
-  properties: Record<string, unknown>,
-): RecipeType =>
-  ({
+interface RecipeData {
+  ingredients: { ingredient: string; quantity: string }[];
+  otherNutrition: { item: string; quantity: string }[];
+  properties: Record<string, unknown>;
+  blockContent: string;
+}
+
+const buildRecipeObject = ({
+  ingredients,
+  otherNutrition,
+  properties,
+  blockContent,
+}: RecipeData): RecipeType => {
+  const { preparation, instructions } = parseBlocksContent(blockContent);
+  return {
     allergies: getArrayProp(properties.Allergies),
     calories: getNumberProp(properties["Calories (cal)"]),
     carbs: getNumberProp(properties["Carbs (g)"]),
@@ -119,17 +150,18 @@ const buildRecipeObject = (
     fat: getNumberProp(properties["Fat (g)"]),
     fiber: getNumberProp(properties["Fiber (g)"]),
     ingredients,
-    instructions: [],
+    instructions,
     mealType: getArrayProp(properties["Meal Type"]),
     otherNutrition,
     prepTime: getNumberProp(properties["Prep Time (min)"]),
-    preparation: [],
+    preparation,
     protein: getNumberProp(properties["Protein (g)"]),
     proteinType: getArrayProp(properties["Protein Type"]),
     servingSize: getStringProp(properties["Serving Size"]),
     title: getStringProp(properties.Name),
     tldr: "",
-  }) as RecipeType;
+  } as RecipeType;
+};
 
 interface RecipeInput {
   allergies: string[];
@@ -213,6 +245,7 @@ ${recipe.instructions.map((step, index) => `${index + 1}. ${step}`).join("\n")}`
 
 export const convertNotionPropertiesToRecipe = (
   properties: Record<string, unknown>,
+  blockContent = "",
 ): RecipeType => {
   const ingredientsRichText = getPropertyValue(properties.Ingredients);
   const ingredients =
@@ -226,9 +259,10 @@ export const convertNotionPropertiesToRecipe = (
       ? parseNutrition(nutritionRichText)
       : [];
 
-  return buildRecipeObject(
+  return buildRecipeObject({
+    blockContent,
     ingredients,
     otherNutrition,
     properties,
-  ) as RecipeType;
+  }) as RecipeType;
 };

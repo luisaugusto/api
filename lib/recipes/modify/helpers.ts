@@ -111,6 +111,7 @@ export const buildModificationPrompt = (
   currentRecipe: Partial<RecipeType>,
   modificationRequest: string,
 ): string => {
+  // eslint-disable-next-line no-console
   console.log("buildModificationPrompt: currentRecipe", currentRecipe);
   const ingredientsList =
     currentRecipe.ingredients

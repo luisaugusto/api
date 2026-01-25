@@ -151,6 +151,39 @@ export const fetchPage = async (
   }
 };
 
+export const fetchPageBlocks = async (pageId: string): Promise<string> => {
+  try {
+    const notion = getNotionClient();
+    const blocks = await notion.blocks.children.list({ block_id: pageId });
+
+    const blockTexts: string[] = [];
+    for (const block of blocks.results) {
+      if (!("type" in block)) {
+        // Skip blocks without type
+      } else if (block.type === "heading_2" && "heading_2" in block) {
+        const heading = block.heading_2;
+        const text = heading.rich_text
+          .map((rt) => (rt.type === "text" ? rt.text?.content : ""))
+          .join("");
+        blockTexts.push(`# ${text}`);
+      } else if (
+        block.type === "numbered_list_item" &&
+        "numbered_list_item" in block
+      ) {
+        const item = block.numbered_list_item;
+        const text = item.rich_text
+          .map((rt) => (rt.type === "text" ? rt.text?.content : ""))
+          .join("");
+        blockTexts.push(`- ${text}`);
+      }
+    }
+
+    return blockTexts.join("\n");
+  } catch (err) {
+    throw new Error(`Failed to fetch page blocks`, { cause: err });
+  }
+};
+
 export const updatePage = async (
   pageId: string,
   properties: NonNullable<
@@ -178,7 +211,6 @@ export const updatePageBlocks = async (
     });
 
     // Delete existing blocks
-    // eslint-disable-next-line no-await-in-loop
     for (const block of existingBlocks.results) {
       if ("id" in block) {
         // eslint-disable-next-line no-await-in-loop
@@ -252,4 +284,3 @@ export const verifyDatabaseAccess = async (
     throw new Error(`Failed to verify database access`, { cause: err });
   }
 };
-
