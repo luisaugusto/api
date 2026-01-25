@@ -79,6 +79,7 @@ const processRecipeModification = async (
 
   const page = await fetchPage(pageId);
   const currentRecipe = convertNotionPropertiesToRecipe(page.properties);
+  console.log("page and recipe", page, currentRecipe);
   const modificationRequest = extractModificationRequest(commentText);
 
   await updateRecipeAndComment(pageId, currentRecipe, modificationRequest);
