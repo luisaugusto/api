@@ -3,6 +3,7 @@ import {
   Client,
   type CreatePageParameters,
   PageObjectResponse,
+  isFullComment,
   isFullPage,
 } from "@notionhq/client";
 import type { Block } from "@tryfabric/martian/build/src/notion/blocks.js";
@@ -168,18 +169,13 @@ export const fetchComment = async (commentId: string): Promise<string> => {
   try {
     const notion = getNotionClient();
     const comment = await notion.comments.retrieve({ comment_id: commentId });
-    const commentData = comment as Record<string, unknown>;
+    if (!isFullComment(comment)) {
+      throw new Error("Fetched comment is not a full comment object");
+    }
 
     // Extract plain text from rich_text array
-    const textContent = (
-      (commentData.rich_text as {
-        type: string;
-        text?: { content: string };
-        mention?: unknown;
-      }[]) || []
-    )
-      .filter((rt) => rt.type === "text" && rt.text)
-      .map((rt) => rt.text?.content)
+    const textContent = comment.rich_text
+      .map((rt) => (rt.type === "text" ? rt.text?.content : ""))
       .join("");
 
     return textContent;
