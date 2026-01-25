@@ -144,7 +144,7 @@ Nutrition Facts (per serving):
 - Fiber: ${currentRecipe.fiber} g
 ${nutritionList ? `\nOther Nutrition:\n${nutritionList}` : ""}
 
-${formatSteps(currentRecipe.instructions, "Instructions")}${formatSteps(currentRecipe.preparation, "Preparation")}`;
+${formatSteps(currentRecipe.instructions, "Instructions")}`;
 };
 
 export const buildModificationPrompt = (
@@ -154,9 +154,15 @@ export const buildModificationPrompt = (
   // eslint-disable-next-line no-console
   console.log("buildModificationPrompt: currentRecipe", currentRecipe);
   // eslint-disable-next-line no-console
-  console.log("buildModificationPrompt: preparation", currentRecipe.preparation);
+  console.log(
+    "buildModificationPrompt: preparation",
+    currentRecipe.preparation,
+  );
   // eslint-disable-next-line no-console
-  console.log("buildModificationPrompt: instructions", currentRecipe.instructions);
+  console.log(
+    "buildModificationPrompt: instructions",
+    currentRecipe.instructions,
+  );
 
   const promptContent = buildPromptContent(currentRecipe);
   // eslint-disable-next-line no-console

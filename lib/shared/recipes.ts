@@ -96,44 +96,12 @@ export const parseNutrition = (
     .filter((item) => item.item);
 
 // Parse preparation and instructions from block content
-const parseBlocksContent = (
-  blockContent: string,
-): { preparation: string[]; instructions: string[] } => {
+const parseBlocksContent = (blockContent: string): string[] => {
   // eslint-disable-next-line no-console
   console.log("parseBlocksContent: input blockContent:", blockContent);
 
-  const preparation: string[] = [];
-  const instructions: string[] = [];
-  let currentSection = "";
-
   const lines = blockContent.split("\n").filter((line) => line.trim());
-  // eslint-disable-next-line no-console
-  console.log("parseBlocksContent: lines after split:", lines);
-
-  for (const line of lines) {
-    if (line.includes("Preparation")) {
-      // eslint-disable-next-line no-console
-      console.log("parseBlocksContent: found Preparation section");
-      currentSection = "preparation";
-    } else if (line.includes("Instructions")) {
-      // eslint-disable-next-line no-console
-      console.log("parseBlocksContent: found Instructions section");
-      currentSection = "instructions";
-    } else if (line.startsWith("- ")) {
-      const step = line.slice(2).trim();
-      // eslint-disable-next-line no-console
-      console.log("parseBlocksContent: found step in section", currentSection, ":", step);
-      if (currentSection === "preparation") {
-        preparation.push(step);
-      } else if (currentSection === "instructions") {
-        instructions.push(step);
-      }
-    }
-  }
-
-  // eslint-disable-next-line no-console
-  console.log("parseBlocksContent: final result", { instructions, preparation });
-  return { instructions, preparation };
+  return lines;
 };
 
 // Extract recipe properties from Notion
@@ -150,9 +118,7 @@ const buildRecipeObject = ({
   properties,
   blockContent,
 }: RecipeData): RecipeType => {
-  const { preparation, instructions } = parseBlocksContent(blockContent);
-  // eslint-disable-next-line no-console
-  console.log("buildRecipeObject: parsed preparation and instructions", { preparation, instructions });
+  const lines = parseBlocksContent(blockContent);
   return {
     allergies: getArrayProp(properties.Allergies),
     calories: getNumberProp(properties["Calories (cal)"]),
@@ -165,11 +131,11 @@ const buildRecipeObject = ({
     fat: getNumberProp(properties["Fat (g)"]),
     fiber: getNumberProp(properties["Fiber (g)"]),
     ingredients,
-    instructions,
+    instructions: lines,
     mealType: getArrayProp(properties["Meal Type"]),
     otherNutrition,
     prepTime: getNumberProp(properties["Prep Time (min)"]),
-    preparation,
+    preparation: [],
     protein: getNumberProp(properties["Protein (g)"]),
     proteinType: getArrayProp(properties["Protein Type"]),
     servingSize: getStringProp(properties["Serving Size"]),
