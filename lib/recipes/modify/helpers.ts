@@ -111,6 +111,7 @@ export const buildModificationPrompt = (
   currentRecipe: Partial<RecipeType>,
   modificationRequest: string,
 ): string => {
+  console.log("buildModificationPrompt: currentRecipe", currentRecipe);
   const ingredientsList =
     currentRecipe.ingredients
       ?.map((ing) => `- ${ing.ingredient}: ${ing.quantity}`)
