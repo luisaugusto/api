@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   buildBodyBlocks,
+  buildImagePrompt,
   buildRecipeNotionProperties,
   convertNotionPropertiesToRecipe,
 } from "../../../lib/shared/recipes.js";
@@ -18,10 +19,11 @@ import {
   postComment,
   updatePage,
   updatePageBlocks,
+  uploadImageToNotion,
   verifyDatabaseAccess,
 } from "../../../lib/shared/notion.js";
+import { generateData, generateImage } from "../../../lib/shared/openai.js";
 import Recipe from "../../../lib/recipes/schema.js";
-import { generateData } from "../../../lib/shared/openai.js";
 import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
 
@@ -48,6 +50,18 @@ const updateRecipeAndComment = async (
   }
 
   const notionProperties = buildRecipeNotionProperties(updatedRecipe);
+  notionProperties.Name = {
+    title: [{ text: { content: updatedRecipe.title } }],
+  };
+
+  const imagePrompt = buildImagePrompt(updatedRecipe);
+  const b64 = await generateImage(imagePrompt);
+  const fileUploadId = await uploadImageToNotion(b64, updatedRecipe.title);
+  notionProperties.cover = {
+    file_upload: { id: fileUploadId },
+    type: "file_upload",
+  };
+
   await updatePage(
     pageId,
     notionProperties as Parameters<typeof updatePage>[1],
@@ -92,37 +106,17 @@ const processRecipeModification = async (
 const validateRequest = (
   req: VercelRequest,
 ): { commentId: string; databaseId: string; pageId: string } | null => {
-  // eslint-disable-next-line no-console
-  console.log("validateRequest: starting validation");
-
   if (!validateWebhookPayload(req.body)) {
-    // eslint-disable-next-line no-console
-    console.log("validateRequest: webhook payload validation failed");
     return null;
   }
-
-  // eslint-disable-next-line no-console
-  console.log("validateRequest: webhook payload valid, extracting IDs");
 
   const { pageId, commentId } = extractIds(req.body);
-  // eslint-disable-next-line no-console
-  console.log("validateRequest: extracted IDs", { commentId, pageId });
-
   const databaseId = process.env.NOTION_RECIPES_DATABASE_ID;
-  // eslint-disable-next-line no-console
-  console.log("validateRequest: databaseId from env", {
-    isDefined: Boolean(databaseId),
-    value: databaseId,
-  });
 
   if (!databaseId) {
-    // eslint-disable-next-line no-console
-    console.log("validateRequest: databaseId is not defined");
     return null;
   }
 
-  // eslint-disable-next-line no-console
-  console.log("validateRequest: validation complete, returning validated data");
   return { commentId, databaseId, pageId };
 };
 
@@ -142,21 +136,15 @@ const handleInvalidRequest = (
   validated: { commentId: string; databaseId: string; pageId: string } | null,
 ): boolean => {
   if (!validated) {
-    // eslint-disable-next-line no-console
-    console.log("handleInvalidRequest: validated is null, returning 400");
     res.status(400).json({ error: "Invalid webhook payload" });
     return true;
   }
   if (!validated.databaseId) {
-    // eslint-disable-next-line no-console
-    console.log("handleInvalidRequest: databaseId is missing, returning 500");
     res.status(500).json({
       error: "NOTION_RECIPES_DATABASE_ID not configured",
     });
     return true;
   }
-  // eslint-disable-next-line no-console
-  console.log("handleInvalidRequest: validation passed");
   return false;
 };
 
@@ -175,8 +163,7 @@ export default function handler(req: VercelRequest, res: VercelResponse): void {
 
     waitUntil(
       processRecipeModification(pageId, commentId, databaseId).catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error("Recipe modification failed:", String(err));
+        throw err;
       }),
     );
 

@@ -13,23 +13,14 @@ import { generateData, generateImage } from "../../lib/shared/openai.js";
 import { markdownToBlocks, markdownToRichText } from "@tryfabric/martian";
 import type { CreatePageParameters } from "@notionhq/client";
 import Recipe from "../../lib/recipes/schema.js";
-import { buildRecipeNotionProperties } from "../../lib/shared/recipes.js";
+import {
+  buildImagePrompt,
+  buildRecipeNotionProperties,
+} from "../../lib/shared/recipes.js";
 import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
 
 const format = zodTextFormat(Recipe, "recipe");
-
-const buildImagePrompt = (recipe: typeof format.__output): string => {
-  const ingredientList = recipe.ingredients
-    .map((ing) => `${ing.ingredient} (${ing.quantity})`)
-    .join(", ");
-  return [
-    `A high-quality, cinematic food photograph of "${recipe.title}"`,
-    recipe.description,
-    `Key ingredients: ${ingredientList}.`,
-    "Style: natural light, shallow depth of field, vibrant colors, soft shadows, no text, no labels, no people, professional food styling.",
-  ].join("\n");
-};
 
 const buildIngredientsRichText = (recipe: typeof format.__output): RichText[] =>
   markdownToRichText(

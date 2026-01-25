@@ -157,13 +157,8 @@ export const fetchPageBlocks = async (pageId: string): Promise<string> => {
     const blocks = await notion.blocks.children.list({ block_id: pageId });
 
     const blockTexts: string[] = [];
-    // eslint-disable-next-line no-console
-    console.log("fetchPageBlocks: total blocks retrieved", blocks.results.length);
 
     for (const block of blocks.results) {
-      // eslint-disable-next-line no-console
-      console.log("fetchPageBlocks: processing block type", "type" in block ? block.type : "unknown");
-
       if (!("type" in block)) {
         // Skip blocks without type
       } else if (block.type === "heading_2" && "heading_2" in block) {
@@ -171,8 +166,6 @@ export const fetchPageBlocks = async (pageId: string): Promise<string> => {
         const text = heading.rich_text
           .map((rt) => (rt.type === "text" ? rt.text?.content : ""))
           .join("");
-        // eslint-disable-next-line no-console
-        console.log("fetchPageBlocks: heading_2 found:", text);
         blockTexts.push(`# ${text}`);
       } else if (
         block.type === "numbered_list_item" &&
@@ -182,16 +175,11 @@ export const fetchPageBlocks = async (pageId: string): Promise<string> => {
         const text = item.rich_text
           .map((rt) => (rt.type === "text" ? rt.text?.content : ""))
           .join("");
-        // eslint-disable-next-line no-console
-        console.log("fetchPageBlocks: numbered_list_item found:", text);
         blockTexts.push(`- ${text}`);
       }
     }
 
-    const result = blockTexts.join("\n");
-    // eslint-disable-next-line no-console
-    console.log("fetchPageBlocks: final block content", result);
-    return result;
+    return blockTexts.join("\n");
   } catch (err) {
     throw new Error(`Failed to fetch page blocks`, { cause: err });
   }
@@ -224,12 +212,11 @@ export const updatePageBlocks = async (
     });
 
     // Delete existing blocks
-    for (const block of existingBlocks.results) {
-      if ("id" in block) {
-        // eslint-disable-next-line no-await-in-loop
-        await notion.blocks.delete({ block_id: block.id });
-      }
-    }
+    await Promise.all(
+      existingBlocks.results
+        .filter((block) => "id" in block)
+        .map((block) => notion.blocks.delete({ block_id: block.id })),
+    );
 
     // Add new blocks
     const blockObjectRequests = convertToBlockObjectRequest(blocks);
@@ -286,12 +273,8 @@ export const verifyDatabaseAccess = async (
     if (!isFullPage(page)) {
       throw new Error("Fetched page is not a full page object");
     }
-    // eslint-disable-next-line no-console
-    console.log(page);
     const pageDatabase =
       page.parent.type === "data_source_id" ? page.parent.database_id : null;
-    // eslint-disable-next-line no-console
-    console.log(pageDatabase, expectedDatabaseId);
     return pageDatabase === expectedDatabaseId;
   } catch (err) {
     throw new Error(`Failed to verify database access`, { cause: err });

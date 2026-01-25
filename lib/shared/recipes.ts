@@ -7,6 +7,18 @@ import { zodTextFormat } from "openai/helpers/zod";
 const format = zodTextFormat(Recipe, "recipe");
 type RecipeType = typeof format.__output;
 
+export const buildImagePrompt = (recipe: RecipeType): string => {
+  const ingredientList = recipe.ingredients
+    .map((ing) => `${ing.ingredient} (${ing.quantity})`)
+    .join(", ");
+  return [
+    `A high-quality, cinematic food photograph of "${recipe.title}"`,
+    recipe.description,
+    `Key ingredients: ${ingredientList}.`,
+    "Style: natural light, shallow depth of field, vibrant colors, soft shadows, no text, no labels, no people, professional food styling.",
+  ].join("\n");
+};
+
 interface PropertyValue {
   type: string;
   title?: { text: { content: string } }[];
@@ -95,14 +107,9 @@ export const parseNutrition = (
     })
     .filter((item) => item.item);
 
-// Parse preparation and instructions from block content
-const parseBlocksContent = (blockContent: string): string[] => {
-  // eslint-disable-next-line no-console
-  console.log("parseBlocksContent: input blockContent:", blockContent);
-
-  const lines = blockContent.split("\n").filter((line) => line.trim());
-  return lines;
-};
+// Extract block content lines as instructions
+const getBlockContentLines = (blockContent: string): string[] =>
+  blockContent.split("\n").filter((line) => line.trim());
 
 // Extract recipe properties from Notion
 interface RecipeData {
@@ -118,7 +125,7 @@ const buildRecipeObject = ({
   properties,
   blockContent,
 }: RecipeData): RecipeType => {
-  const lines = parseBlocksContent(blockContent);
+  const lines = getBlockContentLines(blockContent);
   return {
     allergies: getArrayProp(properties.Allergies),
     calories: getNumberProp(properties["Calories (cal)"]),

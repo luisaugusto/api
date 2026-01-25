@@ -20,55 +20,24 @@ export interface NotionWebhookPayload {
   };
 }
 
-const validateEntity = (
-  entity: Record<string, unknown> | undefined,
-): boolean => {
-  if (!entity || typeof entity.id !== "string" || entity.type !== "comment") {
-    // eslint-disable-next-line no-console
-    console.log("Failed: entity validation", {
-      hasEntity: Boolean(entity),
-      idIsString: typeof entity?.id === "string",
-      typeIsComment: entity?.type === "comment",
-    });
-    return false;
-  }
-  return true;
-};
+const validateEntity = (entity: Record<string, unknown> | undefined): boolean =>
+  !entity || typeof entity.id !== "string" || entity.type !== "comment";
 
-const validateData = (data: Record<string, unknown> | undefined): boolean => {
-  if (
-    !data ||
-    typeof data.page_id !== "string" ||
-    !data.parent ||
-    typeof data.parent !== "object"
-  ) {
-    // eslint-disable-next-line no-console
-    console.log("Failed: data validation", {
-      hasData: Boolean(data),
-      hasParent: Boolean(data?.parent),
-      pageIdIsString: typeof data?.page_id === "string",
-    });
-    return false;
-  }
-  return true;
-};
+const validateData = (data: Record<string, unknown> | undefined): boolean =>
+  !data ||
+  typeof data.page_id !== "string" ||
+  !data.parent ||
+  typeof data.parent !== "object";
 
 export const validateWebhookPayload = (
   payload: unknown,
 ): payload is NotionWebhookPayload => {
-  // eslint-disable-next-line no-console
-  console.log("Webhook validation starting", payload);
-
   if (!payload || typeof payload !== "object") {
-    // eslint-disable-next-line no-console
-    console.log("Failed: payload is not an object");
     return false;
   }
   const payload2 = payload as Record<string, unknown>;
 
   if (payload2.type !== "comment.created") {
-    // eslint-disable-next-line no-console
-    console.log("Failed: type is not comment.created", payload2.type);
     return false;
   }
 
@@ -78,8 +47,6 @@ export const validateWebhookPayload = (
   const data = payload2.data as Record<string, unknown> | undefined;
   if (!validateData(data)) return false;
 
-  // eslint-disable-next-line no-console
-  console.log("Webhook validation passed");
   return true;
 };
 
@@ -151,22 +118,7 @@ export const buildModificationPrompt = (
   currentRecipe: Partial<RecipeType>,
   modificationRequest: string,
 ): string => {
-  // eslint-disable-next-line no-console
-  console.log("buildModificationPrompt: currentRecipe", currentRecipe);
-  // eslint-disable-next-line no-console
-  console.log(
-    "buildModificationPrompt: preparation",
-    currentRecipe.preparation,
-  );
-  // eslint-disable-next-line no-console
-  console.log(
-    "buildModificationPrompt: instructions",
-    currentRecipe.instructions,
-  );
-
   const promptContent = buildPromptContent(currentRecipe);
-  // eslint-disable-next-line no-console
-  console.log("buildModificationPrompt: promptContent", promptContent);
 
   const prompt = `${promptContent}
 Modification request from the user:
