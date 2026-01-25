@@ -2,6 +2,8 @@ import {
   type BlockObjectRequest,
   Client,
   type CreatePageParameters,
+  PageObjectResponse,
+  isFullPage,
 } from "@notionhq/client";
 import type { Block } from "@tryfabric/martian/build/src/notion/blocks.js";
 import { slugify } from "./utils.js";
@@ -135,14 +137,14 @@ export const addCommentToNotionPage = async ({
 
 export const fetchPage = async (
   pageId: string,
-): Promise<Record<string, unknown>> => {
+): Promise<PageObjectResponse> => {
   try {
     const notion = getNotionClient();
     const page = await notion.pages.retrieve({ page_id: pageId });
-    return (page as Record<string, unknown>).properties as Record<
-      string,
-      unknown
-    >;
+    if (!isFullPage(page)) {
+      throw new Error("Fetched page is not a full page object");
+    }
+    return page;
   } catch (err) {
     throw new Error(`Failed to fetch Notion page`, { cause: err });
   }
@@ -208,11 +210,12 @@ export const verifyDatabaseAccess = async (
   try {
     const notion = getNotionClient();
     const page = await notion.pages.retrieve({ page_id: pageId });
-    const pageData = page as Record<string, unknown>;
+    if (!isFullPage(page)) {
+      throw new Error("Fetched page is not a full page object");
+    }
 
-    const pageDatabase = ((pageData.parent as { database_id?: string }) || {})
-      .database_id;
-    console.log(page);
+    const pageDatabase =
+      page.parent.type === "database_id" ? page.parent.database_id : null;
     return pageDatabase === expectedDatabaseId;
   } catch (err) {
     throw new Error(`Failed to verify database access`, { cause: err });
