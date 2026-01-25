@@ -80,17 +80,37 @@ const processRecipeModification = async (
 const validateRequest = (
   req: VercelRequest,
 ): { commentId: string; databaseId: string; pageId: string } | null => {
+  // eslint-disable-next-line no-console
+  console.log("validateRequest: starting validation");
+
   if (!validateWebhookPayload(req.body)) {
+    // eslint-disable-next-line no-console
+    console.log("validateRequest: webhook payload validation failed");
     return null;
   }
+
+  // eslint-disable-next-line no-console
+  console.log("validateRequest: webhook payload valid, extracting IDs");
 
   const { pageId, commentId } = extractIds(req.body);
+  // eslint-disable-next-line no-console
+  console.log("validateRequest: extracted IDs", { commentId, pageId });
+
   const databaseId = process.env.NOTION_RECIPES_DATABASE_ID;
+  // eslint-disable-next-line no-console
+  console.log("validateRequest: databaseId from env", {
+    isDefined: Boolean(databaseId),
+    value: databaseId,
+  });
 
   if (!databaseId) {
+    // eslint-disable-next-line no-console
+    console.log("validateRequest: databaseId is not defined");
     return null;
   }
 
+  // eslint-disable-next-line no-console
+  console.log("validateRequest: validation complete, returning validated data");
   return { commentId, databaseId, pageId };
 };
 
@@ -110,15 +130,21 @@ const handleInvalidRequest = (
   validated: { commentId: string; databaseId: string; pageId: string } | null,
 ): boolean => {
   if (!validated) {
+    // eslint-disable-next-line no-console
+    console.log("handleInvalidRequest: validated is null, returning 400");
     res.status(400).json({ error: "Invalid webhook payload" });
     return true;
   }
   if (!validated.databaseId) {
+    // eslint-disable-next-line no-console
+    console.log("handleInvalidRequest: databaseId is missing, returning 500");
     res.status(500).json({
       error: "NOTION_RECIPES_DATABASE_ID not configured",
     });
     return true;
   }
+  // eslint-disable-next-line no-console
+  console.log("handleInvalidRequest: validation passed");
   return false;
 };
 
