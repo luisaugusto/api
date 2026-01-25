@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   buildBodyBlocks,
+  buildRecipeNotionProperties,
   convertNotionPropertiesToRecipe,
 } from "../../../lib/shared/recipes.js";
 import {
@@ -11,7 +12,6 @@ import {
   validateWebhookPayload,
 } from "../../../lib/recipes/modify/helpers.js";
 import {
-  buildRecipeNotionProperties,
   fetchComment,
   fetchPage,
   postComment,
@@ -77,8 +77,8 @@ const processRecipeModification = async (
     throw new Error("Page is not in the recipes database");
   }
 
-  const pageProperties = await fetchPage(pageId);
-  const currentRecipe = convertNotionPropertiesToRecipe(pageProperties);
+  const page = await fetchPage(pageId);
+  const currentRecipe = convertNotionPropertiesToRecipe(page.properties);
   const modificationRequest = extractModificationRequest(commentText);
 
   await updateRecipeAndComment(pageId, currentRecipe, modificationRequest);

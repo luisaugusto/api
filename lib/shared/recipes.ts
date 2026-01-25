@@ -1,6 +1,6 @@
+import { markdownToBlocks, markdownToRichText } from "@tryfabric/martian";
 import type { Block } from "@tryfabric/martian/build/src/notion/blocks.js";
 import Recipe from "../recipes/schema.js";
-import { markdownToBlocks } from "@tryfabric/martian";
 import { zodTextFormat } from "openai/helpers/zod";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -27,7 +27,9 @@ export const getPropertyValue = (prop: unknown): unknown => {
     propertyValue.type === "rich_text" &&
     Array.isArray(propertyValue.rich_text)
   ) {
-    return propertyValue.rich_text[0]?.text?.content;
+    return propertyValue.rich_text
+      .map((item) => item.text?.content || "")
+      .join("");
   }
   if (propertyValue.type === "number") {
     return propertyValue.number;
@@ -128,6 +130,80 @@ const buildRecipeObject = (
     title: getStringProp(properties.Name),
     tldr: "",
   }) as RecipeType;
+
+interface RecipeInput {
+  allergies: string[];
+  calories: number;
+  carbs: number;
+  cookTime: number;
+  country: string;
+  description: string;
+  diet: string[];
+  difficulty: string;
+  fat: number;
+  fiber: number;
+  ingredients: { ingredient: string; quantity: string }[];
+  mealType: string[];
+  otherNutrition: { item: string; quantity: string }[];
+  prepTime: number;
+  protein: number;
+  proteinType: string[];
+  servingSize: string;
+  title: string;
+}
+
+const buildIngredientsList = (
+  ingredients: { ingredient: string; quantity: string }[],
+): Record<string, unknown> => ({
+  rich_text: markdownToRichText(
+    ingredients
+      .map((ing) => `**${ing.ingredient}** - ${ing.quantity}`)
+      .join("\n"),
+  ),
+});
+
+const buildNutritionList = (
+  otherNutrition: { item: string; quantity: string }[],
+): Record<string, unknown> => ({
+  rich_text: markdownToRichText(
+    otherNutrition
+      .map((item) => `**${item.item}** - ${item.quantity}`)
+      .join("\n"),
+  ),
+});
+
+// Build Notion page properties from recipe data
+export const buildRecipeNotionProperties = (
+  recipe: RecipeInput,
+): Record<string, unknown> => ({
+  Allergies: {
+    multi_select: recipe.allergies.map((allergy) => ({ name: allergy })),
+  },
+  "Calories (cal)": { number: recipe.calories },
+  "Carbs (g)": { number: recipe.carbs },
+  "Cook Time (min)": { number: recipe.cookTime },
+  "Country of Origin": { select: { name: recipe.country } },
+  Description: {
+    rich_text: [{ text: { content: recipe.description } }],
+  },
+  Diet: { multi_select: recipe.diet.map((item) => ({ name: item })) },
+  Difficulty: { select: { name: recipe.difficulty } },
+  "Fat (g)": { number: recipe.fat },
+  "Fiber (g)": { number: recipe.fiber },
+  Ingredients: buildIngredientsList(recipe.ingredients),
+  "Meal Type": {
+    multi_select: recipe.mealType.map((type) => ({ name: type })),
+  },
+  "Nutrition Facts": buildNutritionList(recipe.otherNutrition),
+  "Prep Time (min)": { number: recipe.prepTime },
+  "Protein (g)": { number: recipe.protein },
+  "Protein Type": {
+    multi_select: recipe.proteinType.map((type) => ({ name: type })),
+  },
+  "Serving Size": {
+    rich_text: [{ text: { content: recipe.servingSize } }],
+  },
+});
 
 export const buildBodyBlocks = (recipe: RecipeType): Block[] =>
   markdownToBlocks(`# Preparation

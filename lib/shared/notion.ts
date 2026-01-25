@@ -7,7 +7,6 @@ import {
   isFullPage,
 } from "@notionhq/client";
 import type { Block } from "@tryfabric/martian/build/src/notion/blocks.js";
-import { markdownToRichText } from "@tryfabric/martian";
 import { slugify } from "./utils.js";
 import undici from "undici";
 
@@ -179,8 +178,10 @@ export const updatePageBlocks = async (
     });
 
     // Delete existing blocks
+    // eslint-disable-next-line no-await-in-loop
     for (const block of existingBlocks.results) {
       if ("id" in block) {
+        // eslint-disable-next-line no-await-in-loop
         await notion.blocks.delete({ block_id: block.id });
       }
     }
@@ -240,9 +241,11 @@ export const verifyDatabaseAccess = async (
     if (!isFullPage(page)) {
       throw new Error("Fetched page is not a full page object");
     }
+    // eslint-disable-next-line no-console
     console.log(page);
     const pageDatabase =
       page.parent.type === "data_source_id" ? page.parent.database_id : null;
+    // eslint-disable-next-line no-console
     console.log(pageDatabase, expectedDatabaseId);
     return pageDatabase === expectedDatabaseId;
   } catch (err) {
@@ -250,76 +253,3 @@ export const verifyDatabaseAccess = async (
   }
 };
 
-interface RecipeInput {
-  allergies: string[];
-  calories: number;
-  carbs: number;
-  cookTime: number;
-  country: string;
-  description: string;
-  diet: string[];
-  difficulty: string;
-  fat: number;
-  fiber: number;
-  ingredients: { ingredient: string; quantity: string }[];
-  mealType: string[];
-  otherNutrition: { item: string; quantity: string }[];
-  prepTime: number;
-  protein: number;
-  proteinType: string[];
-  servingSize: string;
-  title: string;
-}
-
-const buildIngredientsList = (
-  ingredients: { ingredient: string; quantity: string }[],
-): Record<string, unknown> => ({
-  rich_text: markdownToRichText(
-    ingredients
-      .map((ing) => `**${ing.ingredient}** - ${ing.quantity}`)
-      .join("\n"),
-  ),
-});
-
-const buildNutritionList = (
-  otherNutrition: { item: string; quantity: string }[],
-): Record<string, unknown> => ({
-  rich_text: markdownToRichText(
-    otherNutrition
-      .map((item) => `**${item.item}** - ${item.quantity}`)
-      .join("\n"),
-  ),
-});
-
-// Build Notion page properties from recipe data
-export const buildRecipeNotionProperties = (
-  recipe: RecipeInput,
-): Record<string, unknown> => ({
-  Allergies: {
-    multi_select: recipe.allergies.map((allergy) => ({ name: allergy })),
-  },
-  "Calories (cal)": { number: recipe.calories },
-  "Carbs (g)": { number: recipe.carbs },
-  "Cook Time (min)": { number: recipe.cookTime },
-  "Country of Origin": { select: { name: recipe.country } },
-  Description: {
-    rich_text: [{ text: { content: recipe.description } }],
-  },
-  Diet: { multi_select: recipe.diet.map((item) => ({ name: item })) },
-  Difficulty: { select: { name: recipe.difficulty } },
-  "Fat (g)": { number: recipe.fat },
-  "Fiber (g)": { number: recipe.fiber },
-  Ingredients: buildIngredientsList(recipe.ingredients),
-  "Meal Type": {
-    multi_select: recipe.mealType.map((type) => ({ name: type })),
-  },
-  "Nutrition Facts": buildNutritionList(recipe.otherNutrition),
-  "Prep Time (min)": { number: recipe.prepTime },
-  "Protein (g)": { number: recipe.protein },
-  "Protein Type": {
-    multi_select: recipe.proteinType.map((type) => ({ name: type })),
-  },
-  "Serving Size": {
-    rich_text: [{ text: { content: recipe.servingSize } }],
-  },
-});

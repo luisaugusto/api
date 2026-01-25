@@ -5,7 +5,6 @@ import type {
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   addCommentToNotionPage,
-  buildRecipeNotionProperties,
   convertToBlockObjectRequest,
   createNotionPage,
   uploadImageToNotion,
@@ -14,6 +13,7 @@ import { generateData, generateImage } from "../../lib/shared/openai.js";
 import { markdownToBlocks, markdownToRichText } from "@tryfabric/martian";
 import type { CreatePageParameters } from "@notionhq/client";
 import Recipe from "../../lib/recipes/schema.js";
+import { buildRecipeNotionProperties } from "../../lib/shared/recipes.js";
 import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
 
