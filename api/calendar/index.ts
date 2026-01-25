@@ -4,13 +4,13 @@ import {
   getDateRange,
   getProps,
   isValidEvent,
-} from "./utils.js";
+} from "../../lib/calendar/utils.js";
 import ical, {
   ICalAlarmType,
   ICalCalendar,
   ICalCalendarMethod,
 } from "ical-generator";
-import { NotionResponse } from "./types.js";
+import { NotionResponse } from "../../lib/calendar/types.js";
 import { isFullPage } from "@notionhq/client";
 
 const createEvent = (page: NotionResponse, cal: ICalCalendar): void => {
