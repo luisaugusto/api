@@ -99,19 +99,30 @@ export const parseNutrition = (
 const parseBlocksContent = (
   blockContent: string,
 ): { preparation: string[]; instructions: string[] } => {
+  // eslint-disable-next-line no-console
+  console.log("parseBlocksContent: input blockContent:", blockContent);
+
   const preparation: string[] = [];
   const instructions: string[] = [];
   let currentSection = "";
 
   const lines = blockContent.split("\n").filter((line) => line.trim());
+  // eslint-disable-next-line no-console
+  console.log("parseBlocksContent: lines after split:", lines);
 
   for (const line of lines) {
     if (line.includes("Preparation")) {
+      // eslint-disable-next-line no-console
+      console.log("parseBlocksContent: found Preparation section");
       currentSection = "preparation";
     } else if (line.includes("Instructions")) {
+      // eslint-disable-next-line no-console
+      console.log("parseBlocksContent: found Instructions section");
       currentSection = "instructions";
     } else if (line.startsWith("- ")) {
       const step = line.slice(2).trim();
+      // eslint-disable-next-line no-console
+      console.log("parseBlocksContent: found step in section", currentSection, ":", step);
       if (currentSection === "preparation") {
         preparation.push(step);
       } else if (currentSection === "instructions") {
@@ -120,6 +131,8 @@ const parseBlocksContent = (
     }
   }
 
+  // eslint-disable-next-line no-console
+  console.log("parseBlocksContent: final result", { instructions, preparation });
   return { instructions, preparation };
 };
 
@@ -138,6 +151,8 @@ const buildRecipeObject = ({
   blockContent,
 }: RecipeData): RecipeType => {
   const { preparation, instructions } = parseBlocksContent(blockContent);
+  // eslint-disable-next-line no-console
+  console.log("buildRecipeObject: parsed preparation and instructions", { preparation, instructions });
   return {
     allergies: getArrayProp(properties.Allergies),
     calories: getNumberProp(properties["Calories (cal)"]),

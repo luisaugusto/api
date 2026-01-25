@@ -107,12 +107,7 @@ const formatSteps = (steps: string[] | undefined, label: string): string => {
   return formatted ? `${label}:\n${formatted}\n` : "";
 };
 
-export const buildModificationPrompt = (
-  currentRecipe: Partial<RecipeType>,
-  modificationRequest: string,
-): string => {
-  // eslint-disable-next-line no-console
-  console.log("buildModificationPrompt: currentRecipe", currentRecipe);
+const buildPromptContent = (currentRecipe: Partial<RecipeType>): string => {
   const ingredientsList =
     currentRecipe.ingredients
       ?.map((ing) => `- ${ing.ingredient}: ${ing.quantity}`)
@@ -121,7 +116,8 @@ export const buildModificationPrompt = (
     currentRecipe.otherNutrition
       ?.map((item) => `- ${item.item}: ${item.quantity}`)
       .join("\n") || "";
-  const prompt = `You are a helpful assistant that provides detailed cooking recipes.
+
+  return `You are a helpful assistant that provides detailed cooking recipes.
 The user wants to modify an existing recipe based on their request.
 
 Current recipe:
@@ -148,7 +144,25 @@ Nutrition Facts (per serving):
 - Fiber: ${currentRecipe.fiber} g
 ${nutritionList ? `\nOther Nutrition:\n${nutritionList}` : ""}
 
-${formatSteps(currentRecipe.preparation, "Preparation")}${formatSteps(currentRecipe.instructions, "Instructions")}
+${formatSteps(currentRecipe.instructions, "Instructions")}${formatSteps(currentRecipe.preparation, "Preparation")}`;
+};
+
+export const buildModificationPrompt = (
+  currentRecipe: Partial<RecipeType>,
+  modificationRequest: string,
+): string => {
+  // eslint-disable-next-line no-console
+  console.log("buildModificationPrompt: currentRecipe", currentRecipe);
+  // eslint-disable-next-line no-console
+  console.log("buildModificationPrompt: preparation", currentRecipe.preparation);
+  // eslint-disable-next-line no-console
+  console.log("buildModificationPrompt: instructions", currentRecipe.instructions);
+
+  const promptContent = buildPromptContent(currentRecipe);
+  // eslint-disable-next-line no-console
+  console.log("buildModificationPrompt: promptContent", promptContent);
+
+  const prompt = `${promptContent}
 Modification request from the user:
 "${modificationRequest}"
 
