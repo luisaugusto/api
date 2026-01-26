@@ -4,6 +4,7 @@ import {
   convertToBlockObjectRequest,
   createNotionPage,
 } from "../../lib/shared/notion.js";
+import { setResponse, verifyParam } from "../../lib/shared/utils.js";
 import type { Block } from "@tryfabric/martian/build/src/notion/blocks.js";
 import Tip from "../../lib/spanish-tips/schema.js";
 import { generateData } from "../../lib/shared/openai.js";
@@ -74,19 +75,6 @@ const createTip = async (
   });
 };
 
-const validateParams = (
-  database_id: unknown,
-  prompt: unknown,
-): { database_id: string; prompt: string } | { error: string } => {
-  if (!database_id) {
-    return { error: "Missing required query param: db (Notion database ID)" };
-  }
-  if (!prompt) {
-    return { error: "Missing required query param: prompt" };
-  }
-  return { database_id: String(database_id), prompt: String(prompt) };
-};
-
 const generateTip = async (prompt: string): Promise<typeof format.__output> => {
   const response = await generateData({
     format,
@@ -104,24 +92,26 @@ const generateTip = async (prompt: string): Promise<typeof format.__output> => {
 
 export default function handler(req: VercelRequest, res: VercelResponse): void {
   try {
-    const validation = validateParams(req.query.db, req.query.prompt);
-
-    if ("error" in validation) {
-      res.status(400).json({ error: validation.error });
-      return;
-    }
-
-    waitUntil(
-      generateTip(validation.prompt).then((tip) =>
-        createTip(tip, validation.database_id),
-      ),
+    const db = verifyParam(
+      res,
+      req.query.db,
+      "Missing required query param: db",
+    );
+    const prompt = verifyParam(
+      res,
+      req.query.prompt,
+      "Missing required query param: prompt",
     );
 
-    res.status(200).json("Spanish tip creation in progress.");
+    waitUntil(generateTip(prompt).then((tip) => createTip(tip, db)));
+
+    res.status(200).json("Tip creation in progress");
   } catch (error) {
-    res.status(500).json({
-      detail: String(error),
-      error: "Failed to create Spanish tip",
+    setResponse({
+      error,
+      message: "Failed to create Spanish tip",
+      res,
+      status: 500,
     });
   }
 }
