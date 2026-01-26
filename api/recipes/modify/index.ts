@@ -95,7 +95,7 @@ export default function handler(req: VercelRequest, res: VercelResponse): void {
     const body = req.body as NotionWebhookPayload;
     if (body.type !== "comment_created") {
       setResponse({
-        error: null,
+        error: body,
         message: "Ignoring non-comment_created event",
         res,
         status: 200,
