@@ -7,29 +7,20 @@ import {
   addCommentToNotionPage,
   convertToBlockObjectRequest,
   createNotionPage,
-  uploadImageToNotion,
 } from "../../lib/shared/notion.js";
-import { generateData, generateImage } from "../../lib/shared/openai.js";
+import {
+  buildRecipeNotionProperties,
+  generateRecipeImage,
+} from "../../lib/shared/recipes.js";
 import { markdownToBlocks, markdownToRichText } from "@tryfabric/martian";
 import { setResponse, verifyParam } from "../../lib/shared/utils.js";
 import type { CreatePageParameters } from "@notionhq/client";
 import Recipe from "../../lib/recipes/schema.js";
+import { generateData } from "../../lib/shared/openai.js";
 import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
 
 const format = zodTextFormat(Recipe, "recipe");
-
-const buildImagePrompt = (recipe: typeof format.__output): string => {
-  const ingredientList = recipe.ingredients
-    .map((ing) => `${ing.ingredient} (${ing.quantity})`)
-    .join(", ");
-  return [
-    `A high-quality, cinematic food photograph of "${recipe.title}"`,
-    recipe.description,
-    `Key ingredients: ${ingredientList}.`,
-    "Style: natural light, shallow depth of field, vibrant colors, soft shadows, no text, no labels, no people, professional food styling.",
-  ].join("\n");
-};
 
 const buildIngredientsRichText = (recipe: typeof format.__output): RichText[] =>
   markdownToRichText(
@@ -73,72 +64,22 @@ const createRecipe = async (
   database_id: string,
 ): Promise<void> => {
   const { blocks, ingredientsRT, nutritionRT } = buildInformation(recipe);
+  const recipeProperties = buildRecipeNotionProperties(recipe);
   const pageId = await createNotionPage({
     children: convertToBlockObjectRequest(blocks),
     cover: cover ?? null,
     database_id,
     properties: {
-      Allergies: {
-        multi_select: recipe.allergies.map((allergy) => ({ name: allergy })),
-      },
-      "Calories (cal)": { number: recipe.calories },
-      "Carbs (g)": { number: recipe.carbs },
-      "Cook Time (min)": { number: recipe.cookTime },
-      "Country of Origin": { select: { name: recipe.country } },
-      Description: {
-        rich_text: [{ text: { content: recipe.description } }],
-      },
-      Diet: { multi_select: recipe.diet.map((item) => ({ name: item })) },
-      Difficulty: { select: { name: recipe.difficulty } },
-      "Fat (g)": { number: recipe.fat },
-      "Fiber (g)": { number: recipe.fiber },
+      ...recipeProperties,
       Ingredients: { rich_text: ingredientsRT },
-      "Meal Type": {
-        multi_select: recipe.mealType.map((type) => ({ name: type })),
-      },
       Name: { title: [{ text: { content: recipe.title } }] },
       "Nutrition Facts": { rich_text: nutritionRT },
-      "Prep Time (min)": { number: recipe.prepTime },
-      "Protein (g)": { number: recipe.protein },
-      "Protein Type": {
-        multi_select: recipe.proteinType.map((type) => ({ name: type })),
-      },
-      "Serving Size": {
-        rich_text: [{ text: { content: recipe.servingSize } }],
-      },
     },
   });
   await addCommentToNotionPage({
     message: "your recipe has been created!",
     pageId,
   });
-};
-
-const generateRecipeWithImage = async (
-  prompt: string,
-): Promise<{
-  cover: CreatePageParameters["cover"];
-  recipe: typeof format.__output;
-}> => {
-  const recipe = await generateData({
-    format,
-    input: prompt,
-    instructions:
-      "You are a helpful assistant that provides detailed cooking recipes based on user prompts. All the instructions and details should be should be clear, concise, and easy to follow.",
-  });
-
-  if (!recipe) {
-    throw new Error("No recipe generated");
-  }
-
-  const imagePrompt = buildImagePrompt(recipe);
-  const b64 = await generateImage(imagePrompt);
-  const fileUploadId = await uploadImageToNotion(b64, recipe.title);
-  const cover: CreatePageParameters["cover"] = {
-    file_upload: { id: fileUploadId },
-    type: "file_upload",
-  };
-  return { cover, recipe };
 };
 
 export default function handler(req: VercelRequest, res: VercelResponse): void {
@@ -155,8 +96,15 @@ export default function handler(req: VercelRequest, res: VercelResponse): void {
     );
 
     waitUntil(
-      generateRecipeWithImage(prompt).then(({ cover, recipe }) =>
-        createRecipe(recipe, cover, db),
+      generateData({
+        format,
+        input: prompt,
+        instructions:
+          "You are a helpful assistant that provides detailed cooking recipes based on user prompts. All the instructions and details should be should be clear, concise, and easy to follow.",
+      }).then((recipe) =>
+        generateRecipeImage(recipe).then((cover) =>
+          createRecipe(recipe, cover, db),
+        ),
       ),
     );
 

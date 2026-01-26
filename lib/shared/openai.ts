@@ -33,16 +33,16 @@ export const generateData = async <T extends ResponseFormatTextConfig>({
   instructions: string;
   format: T;
 }): Promise<
-  ParsedResponse<
-    NonNullable<
+  NonNullable<
+    ParsedResponse<
       ExtractParsedContentFromParams<{
         input: string;
         instructions: string;
         model: "gpt-5-mini";
         text: { format: T };
       }>
-    >
-  >["output_parsed"]
+    >["output_parsed"]
+  >
 > => {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   try {

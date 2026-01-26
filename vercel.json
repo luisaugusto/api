@@ -2,7 +2,8 @@
   "rewrites": [
     { "source": "/calendar.ics", "destination": "/api/calendar" },
     { "source": "/spanish", "destination": "/api/spanish-tips" },
-    { "source": "/recipes", "destination": "/api/recipes" }
+    { "source": "/recipes", "destination": "/api/recipes" },
+    { "source": "/recipes/modify", "destination": "/api/recipes/modify" }
   ],
   "headers": [
     {
