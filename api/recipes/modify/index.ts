@@ -94,9 +94,15 @@ export default function handler(req: VercelRequest, res: VercelResponse): void {
   try {
     const body = req.body as NotionWebhookPayload;
     if (body.type !== "comment_created") {
-      res.status(200).json({ message: "Event type ignored" });
+      setResponse({
+        error: null,
+        message: "Ignoring non-comment_created event",
+        res,
+        status: 200,
+      });
       return;
     }
+
     waitUntil(
       processRecipeModification(
         body.data.page_id,
