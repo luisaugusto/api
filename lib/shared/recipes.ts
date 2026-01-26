@@ -1,6 +1,9 @@
+import { Client, CreatePageParameters } from "@notionhq/client";
 import { markdownToBlocks, markdownToRichText } from "@tryfabric/martian";
 import type { Block } from "@tryfabric/martian/build/src/notion/blocks.js";
 import Recipe from "../recipes/schema.js";
+import { generateImage } from "./openai.js";
+import { uploadImageToNotion } from "./notion.js";
 import { zodTextFormat } from "openai/helpers/zod";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -134,21 +137,25 @@ const buildRecipeObject = ({
     country: getStringProp(properties["Country of Origin"]),
     description: getStringProp(properties.Description),
     diet: getArrayProp(properties.Diet),
-    difficulty: getStringProp(properties.Difficulty),
+    difficulty: getStringProp(
+      properties.Difficulty,
+    ) as RecipeType["difficulty"],
     fat: getNumberProp(properties["Fat (g)"]),
     fiber: getNumberProp(properties["Fiber (g)"]),
     ingredients,
     instructions: lines,
-    mealType: getArrayProp(properties["Meal Type"]),
+    mealType: getArrayProp(properties["Meal Type"]) as RecipeType["mealType"],
     otherNutrition,
     prepTime: getNumberProp(properties["Prep Time (min)"]),
     preparation: [],
     protein: getNumberProp(properties["Protein (g)"]),
-    proteinType: getArrayProp(properties["Protein Type"]),
+    proteinType: getArrayProp(
+      properties["Protein Type"],
+    ) as RecipeType["proteinType"],
     servingSize: getStringProp(properties["Serving Size"]),
     title: getStringProp(properties.Name),
     tldr: "",
-  } as RecipeType;
+  };
 };
 
 interface RecipeInput {
@@ -172,30 +179,12 @@ interface RecipeInput {
   title: string;
 }
 
-const buildIngredientsList = (
-  ingredients: { ingredient: string; quantity: string }[],
-): Record<string, unknown> => ({
-  rich_text: markdownToRichText(
-    ingredients
-      .map((ing) => `**${ing.ingredient}** - ${ing.quantity}`)
-      .join("\n"),
-  ),
-});
-
-const buildNutritionList = (
-  otherNutrition: { item: string; quantity: string }[],
-): Record<string, unknown> => ({
-  rich_text: markdownToRichText(
-    otherNutrition
-      .map((item) => `**${item.item}** - ${item.quantity}`)
-      .join("\n"),
-  ),
-});
-
 // Build Notion page properties from recipe data
 export const buildRecipeNotionProperties = (
   recipe: RecipeInput,
-): Record<string, unknown> => ({
+): NonNullable<
+  Parameters<typeof Client.prototype.pages.create>[0]["properties"]
+> => ({
   Allergies: {
     multi_select: recipe.allergies.map((allergy) => ({ name: allergy })),
   },
@@ -210,11 +199,23 @@ export const buildRecipeNotionProperties = (
   Difficulty: { select: { name: recipe.difficulty } },
   "Fat (g)": { number: recipe.fat },
   "Fiber (g)": { number: recipe.fiber },
-  Ingredients: buildIngredientsList(recipe.ingredients),
+  Ingredients: {
+    rich_text: markdownToRichText(
+      recipe.ingredients
+        .map((ing) => `**${ing.ingredient}** - ${ing.quantity}`)
+        .join("\n"),
+    ),
+  },
   "Meal Type": {
     multi_select: recipe.mealType.map((type) => ({ name: type })),
   },
-  "Nutrition Facts": buildNutritionList(recipe.otherNutrition),
+  "Nutrition Facts": {
+    rich_text: markdownToRichText(
+      recipe.otherNutrition
+        .map((item) => `**${item.item}** - ${item.quantity}`)
+        .join("\n"),
+    ),
+  },
   "Prep Time (min)": { number: recipe.prepTime },
   "Protein (g)": { number: recipe.protein },
   "Protein Type": {
@@ -252,5 +253,17 @@ export const convertNotionPropertiesToRecipe = (
     ingredients,
     otherNutrition,
     properties,
-  }) as RecipeType;
+  });
+};
+
+export const generateRecipeImage = async (
+  recipe: RecipeType,
+): Promise<CreatePageParameters["cover"]> => {
+  const imagePrompt = buildImagePrompt(recipe);
+  const b64 = await generateImage(imagePrompt);
+  const fileUploadId = await uploadImageToNotion(b64, recipe.title);
+  return {
+    file_upload: { id: fileUploadId },
+    type: "file_upload",
+  };
 };

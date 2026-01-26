@@ -20,50 +20,6 @@ export interface NotionWebhookPayload {
   };
 }
 
-const validateEntity = (entity: Record<string, unknown> | undefined): boolean =>
-  !entity || typeof entity.id !== "string" || entity.type !== "comment";
-
-const validateData = (data: Record<string, unknown> | undefined): boolean =>
-  !data ||
-  typeof data.page_id !== "string" ||
-  !data.parent ||
-  typeof data.parent !== "object";
-
-export const validateWebhookPayload = (
-  payload: unknown,
-): payload is NotionWebhookPayload => {
-  if (!payload || typeof payload !== "object") {
-    return false;
-  }
-  const payload2 = payload as Record<string, unknown>;
-
-  if (payload2.type !== "comment.created") {
-    return false;
-  }
-
-  const entity = payload2.entity as Record<string, unknown> | undefined;
-  if (!validateEntity(entity)) return false;
-
-  const data = payload2.data as Record<string, unknown> | undefined;
-  if (!validateData(data)) return false;
-
-  return true;
-};
-
-export const extractIds = (
-  payload: NotionWebhookPayload,
-): {
-  pageId: string;
-  commentId: string;
-} => {
-  const pageId = payload.data.page_id;
-  const commentId = payload.entity.id;
-  return { commentId, pageId };
-};
-
-export const hasModifyTag = (commentText: string): boolean =>
-  commentText.includes("#modify");
-
 export const extractModificationRequest = (commentText: string): string => {
   const modifyIndex = commentText.indexOf("#modify");
   return commentText.substring(modifyIndex + 7).trim();

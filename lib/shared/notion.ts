@@ -3,6 +3,9 @@ import {
   Client,
   type CreatePageParameters,
   PageObjectResponse,
+  RichTextItemResponse,
+  UpdatePageParameters,
+  isFullBlock,
   isFullComment,
   isFullPage,
 } from "@notionhq/client";
@@ -11,6 +14,9 @@ import { slugify } from "./utils.js";
 import undici from "undici";
 
 const { FormData } = undici;
+
+const richTextToString = (richText: RichTextItemResponse[]): string =>
+  richText.map((rt) => (rt.type === "text" ? rt.text?.content : "")).join("");
 
 export const getNotionClient = (): Client =>
   new Client({ auth: String(process.env.NOTION_TOKEN) });
@@ -134,23 +140,6 @@ export const addCommentToNotionPage = async ({
   }
 };
 
-// Generic helpers for reuse across features
-
-export const fetchPage = async (
-  pageId: string,
-): Promise<PageObjectResponse> => {
-  try {
-    const notion = getNotionClient();
-    const page = await notion.pages.retrieve({ page_id: pageId });
-    if (!isFullPage(page)) {
-      throw new Error("Fetched page is not a full page object");
-    }
-    return page;
-  } catch (err) {
-    throw new Error(`Failed to fetch Notion page`, { cause: err });
-  }
-};
-
 export const fetchPageBlocks = async (pageId: string): Promise<string> => {
   try {
     const notion = getNotionClient();
@@ -159,23 +148,33 @@ export const fetchPageBlocks = async (pageId: string): Promise<string> => {
     const blockTexts: string[] = [];
 
     for (const block of blocks.results) {
-      if (!("type" in block)) {
-        // Skip blocks without type
-      } else if (block.type === "heading_2" && "heading_2" in block) {
-        const heading = block.heading_2;
-        const text = heading.rich_text
-          .map((rt) => (rt.type === "text" ? rt.text?.content : ""))
-          .join("");
-        blockTexts.push(`# ${text}`);
-      } else if (
-        block.type === "numbered_list_item" &&
-        "numbered_list_item" in block
-      ) {
-        const item = block.numbered_list_item;
-        const text = item.rich_text
-          .map((rt) => (rt.type === "text" ? rt.text?.content : ""))
-          .join("");
-        blockTexts.push(`- ${text}`);
+      if (isFullBlock(block)) {
+        switch (block.type) {
+          case "paragraph":
+            blockTexts.push(richTextToString(block.paragraph.rich_text));
+            break;
+          case "heading_1":
+            blockTexts.push(richTextToString(block.heading_1.rich_text));
+            break;
+          case "heading_2":
+            blockTexts.push(richTextToString(block.heading_2.rich_text));
+            break;
+          case "heading_3":
+            blockTexts.push(richTextToString(block.heading_3.rich_text));
+            break;
+          case "numbered_list_item":
+            blockTexts.push(
+              richTextToString(block.numbered_list_item.rich_text),
+            );
+            break;
+          case "bulleted_list_item":
+            blockTexts.push(
+              richTextToString(block.bulleted_list_item.rich_text),
+            );
+            break;
+          default:
+            break;
+        }
       }
     }
 
@@ -187,13 +186,18 @@ export const fetchPageBlocks = async (pageId: string): Promise<string> => {
 
 export const updatePage = async (
   pageId: string,
+  cover: UpdatePageParameters["cover"],
   properties: NonNullable<
     Parameters<typeof Client.prototype.pages.update>[0]["properties"]
   >,
 ): Promise<void> => {
   try {
     const notion = getNotionClient();
-    await notion.pages.update({ page_id: pageId, properties });
+    await notion.pages.update({
+      cover: cover ?? null,
+      page_id: pageId,
+      properties,
+    });
   } catch (err) {
     throw new Error(`Failed to update Notion page`, { cause: err });
   }
@@ -237,12 +241,7 @@ export const fetchComment = async (commentId: string): Promise<string> => {
       throw new Error("Fetched comment is not a full comment object");
     }
 
-    // Extract plain text from rich_text array
-    const textContent = comment.rich_text
-      .map((rt) => (rt.type === "text" ? rt.text?.content : ""))
-      .join("");
-
-    return textContent;
+    return richTextToString(comment.rich_text);
   } catch (err) {
     throw new Error(`Failed to fetch Notion comment`, { cause: err });
   }
@@ -266,16 +265,19 @@ export const postComment = async (
 export const verifyDatabaseAccess = async (
   pageId: string,
   expectedDatabaseId: string,
-): Promise<boolean> => {
+): Promise<PageObjectResponse | null> => {
   try {
     const notion = getNotionClient();
     const page = await notion.pages.retrieve({ page_id: pageId });
+
     if (!isFullPage(page)) {
       throw new Error("Fetched page is not a full page object");
     }
+
     const pageDatabase =
       page.parent.type === "data_source_id" ? page.parent.database_id : null;
-    return pageDatabase === expectedDatabaseId;
+
+    return pageDatabase === expectedDatabaseId ? page : null;
   } catch (err) {
     throw new Error(`Failed to verify database access`, { cause: err });
   }

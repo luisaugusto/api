@@ -1,29 +1,26 @@
+import {
+  NotionWebhookPayload,
+  buildModificationPrompt,
+  extractModificationRequest,
+} from "../../../lib/recipes/modify/helpers.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   buildBodyBlocks,
-  buildImagePrompt,
   buildRecipeNotionProperties,
   convertNotionPropertiesToRecipe,
+  generateRecipeImage,
 } from "../../../lib/shared/recipes.js";
 import {
-  buildModificationPrompt,
-  extractIds,
-  extractModificationRequest,
-  hasModifyTag,
-  validateWebhookPayload,
-} from "../../../lib/recipes/modify/helpers.js";
-import {
   fetchComment,
-  fetchPage,
   fetchPageBlocks,
   postComment,
   updatePage,
   updatePageBlocks,
-  uploadImageToNotion,
   verifyDatabaseAccess,
 } from "../../../lib/shared/notion.js";
-import { generateData, generateImage } from "../../../lib/shared/openai.js";
 import Recipe from "../../../lib/recipes/schema.js";
+import { generateData } from "../../../lib/shared/openai.js";
+import { setResponse } from "../../../lib/shared/utils.js";
 import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
 
@@ -54,18 +51,9 @@ const updateRecipeAndComment = async (
     title: [{ text: { content: updatedRecipe.title } }],
   };
 
-  const imagePrompt = buildImagePrompt(updatedRecipe);
-  const b64 = await generateImage(imagePrompt);
-  const fileUploadId = await uploadImageToNotion(b64, updatedRecipe.title);
-  notionProperties.cover = {
-    file_upload: { id: fileUploadId },
-    type: "file_upload",
-  };
+  const cover = await generateRecipeImage(updatedRecipe);
 
-  await updatePage(
-    pageId,
-    notionProperties as Parameters<typeof updatePage>[1],
-  );
+  await updatePage(pageId, cover, notionProperties);
 
   const bodyBlocks = buildBodyBlocks(updatedRecipe);
   await updatePageBlocks(pageId, bodyBlocks);
@@ -83,16 +71,15 @@ const processRecipeModification = async (
 ): Promise<void> => {
   const commentText = await fetchComment(commentId);
 
-  if (!hasModifyTag(commentText)) {
+  if (commentText.includes("#modify") === false) {
     return;
   }
 
-  const hasAccess = await verifyDatabaseAccess(pageId, databaseId);
-  if (!hasAccess) {
-    throw new Error("Page is not in the recipes database");
+  const page = await verifyDatabaseAccess(pageId, databaseId);
+  if (!page) {
+    throw new Error("Page is not found in the database");
   }
 
-  const page = await fetchPage(pageId);
   const blockContent = await fetchPageBlocks(pageId);
   const currentRecipe = convertNotionPropertiesToRecipe(
     page.properties,
@@ -103,72 +90,28 @@ const processRecipeModification = async (
   await updateRecipeAndComment(pageId, currentRecipe, modificationRequest);
 };
 
-const validateRequest = (
-  req: VercelRequest,
-): { commentId: string; databaseId: string; pageId: string } | null => {
-  if (!validateWebhookPayload(req.body)) {
-    return null;
-  }
-
-  const { pageId, commentId } = extractIds(req.body);
-  const databaseId = process.env.NOTION_RECIPES_DATABASE_ID;
-
-  if (!databaseId) {
-    return null;
-  }
-
-  return { commentId, databaseId, pageId };
-};
-
-const sendErrorResponse = (
-  res: VercelResponse,
-  error: unknown,
-  message: string,
-): void => {
-  res.status(500).json({
-    detail: String(error),
-    error: message,
-  });
-};
-
-const handleInvalidRequest = (
-  res: VercelResponse,
-  validated: { commentId: string; databaseId: string; pageId: string } | null,
-): boolean => {
-  if (!validated) {
-    res.status(400).json({ error: "Invalid webhook payload" });
-    return true;
-  }
-  if (!validated.databaseId) {
-    res.status(500).json({
-      error: "NOTION_RECIPES_DATABASE_ID not configured",
-    });
-    return true;
-  }
-  return false;
-};
-
 export default function handler(req: VercelRequest, res: VercelResponse): void {
   try {
-    const validated = validateRequest(req);
-    if (handleInvalidRequest(res, validated)) {
+    const body = req.body as NotionWebhookPayload;
+    if (body.type !== "comment_created") {
+      res.status(200).json({ message: "Event type ignored" });
       return;
     }
-
-    if (!validated) {
-      return;
-    }
-
-    const { pageId, commentId, databaseId } = validated;
-
     waitUntil(
-      processRecipeModification(pageId, commentId, databaseId).catch((err) => {
-        throw err;
-      }),
+      processRecipeModification(
+        body.data.page_id,
+        body.entity.id,
+        body.data.parent.id,
+      ),
     );
 
     res.status(200).json({ message: "Recipe modification in progress" });
   } catch (error) {
-    sendErrorResponse(res, error, "Failed to process webhook");
+    setResponse({
+      error,
+      message: "Failed to process webhook",
+      res,
+      status: 500,
+    });
   }
 }

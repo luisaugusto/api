@@ -11,7 +11,7 @@ import ical, {
   ICalCalendarMethod,
 } from "ical-generator";
 import { setResponse, verifyParam } from "../../lib/shared/utils.js";
-import type { NotionResponse } from "../../lib/calendar/types.js";
+import { NotionResponse } from "../../lib/calendar/types.js";
 import { isFullPage } from "@notionhq/client";
 
 const createEvent = (page: NotionResponse, cal: ICalCalendar): void => {
