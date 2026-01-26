@@ -93,7 +93,7 @@ const processRecipeModification = async (
 export default function handler(req: VercelRequest, res: VercelResponse): void {
   try {
     const body = req.body as NotionWebhookPayload;
-    if (body.type !== "comment_created") {
+    if (body.type !== "comment.created") {
       setResponse({
         error: body,
         message: "Ignoring non-comment_created event",
