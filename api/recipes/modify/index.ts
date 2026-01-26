@@ -77,7 +77,9 @@ const processRecipeModification = async (
 
   const page = await verifyDatabaseAccess(pageId, databaseId);
   if (!page) {
-    throw new Error("Page is not found in the database");
+    throw new Error(
+      `Page ${pageId} is not found in the database ${databaseId}`,
+    );
   }
 
   const blockContent = await fetchPageBlocks(pageId);
@@ -92,10 +94,12 @@ const processRecipeModification = async (
 
 export default function handler(req: VercelRequest, res: VercelResponse): void {
   try {
+    // eslint-disable-next-line no-console
+    console.log(req.body);
     const body = req.body as NotionWebhookPayload;
     if (body.type !== "comment.created") {
       setResponse({
-        error: body,
+        error: null,
         message: "Ignoring non-comment_created event",
         res,
         status: 200,
