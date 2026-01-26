@@ -19,7 +19,7 @@ export const setResponse = ({
 }): void => {
   // eslint-disable-next-line no-console
   console.error(message, error);
-  res.status(status);
+  res.status(status).json({ error: String(error), message });
 };
 
 export const verifyParam = (
@@ -34,7 +34,7 @@ export const verifyParam = (
       res,
       status: 400,
     });
-    throw new Error(message);
+    return "";
   }
 
   return String(param);

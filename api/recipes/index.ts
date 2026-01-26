@@ -160,7 +160,7 @@ export default function handler(req: VercelRequest, res: VercelResponse): void {
       ),
     );
 
-    res.status(200);
+    res.status(200).json({ message: "Recipe creation in progress" });
   } catch (error) {
     setResponse({
       error,

@@ -105,7 +105,7 @@ export default function handler(req: VercelRequest, res: VercelResponse): void {
 
     waitUntil(generateTip(prompt).then((tip) => createTip(tip, db)));
 
-    res.status(200);
+    res.status(200).json({ message: "Tip creation in progress" });
   } catch (error) {
     setResponse({
       error,
