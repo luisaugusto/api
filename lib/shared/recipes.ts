@@ -158,30 +158,9 @@ const buildRecipeObject = ({
   };
 };
 
-interface RecipeInput {
-  allergies: string[];
-  calories: number;
-  carbs: number;
-  cookTime: number;
-  country: string;
-  description: string;
-  diet: string[];
-  difficulty: string;
-  fat: number;
-  fiber: number;
-  ingredients: { ingredient: string; quantity: string }[];
-  mealType: string[];
-  otherNutrition: { item: string; quantity: string }[];
-  prepTime: number;
-  protein: number;
-  proteinType: string[];
-  servingSize: string;
-  title: string;
-}
-
 // Build Notion page properties from recipe data
 export const buildRecipeNotionProperties = (
-  recipe: RecipeInput,
+  recipe: typeof format.__output,
 ): NonNullable<
   Parameters<typeof Client.prototype.pages.create>[0]["properties"]
 > => ({
