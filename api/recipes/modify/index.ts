@@ -67,7 +67,6 @@ const updateRecipeAndComment = async (
 const processRecipeModification = async (
   pageId: string,
   commentId: string,
-  databaseId: string,
 ): Promise<void> => {
   const commentText = await fetchComment(commentId);
 
@@ -75,11 +74,9 @@ const processRecipeModification = async (
     return;
   }
 
-  const page = await verifyDatabaseAccess(pageId, databaseId);
+  const page = await verifyDatabaseAccess(pageId);
   if (!page) {
-    throw new Error(
-      `Page ${pageId} is not found in the database ${databaseId}`,
-    );
+    throw new Error(`Page ${pageId} is not found in the database`);
   }
 
   const blockContent = await fetchPageBlocks(pageId);
@@ -107,13 +104,7 @@ export default function handler(req: VercelRequest, res: VercelResponse): void {
       return;
     }
 
-    waitUntil(
-      processRecipeModification(
-        body.data.page_id,
-        body.entity.id,
-        body.data.parent.id,
-      ),
-    );
+    waitUntil(processRecipeModification(body.data.page_id, body.entity.id));
 
     res.status(200).json({ message: "Recipe modification in progress" });
   } catch (error) {

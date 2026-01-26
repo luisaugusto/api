@@ -264,7 +264,6 @@ export const postComment = async (
 
 export const verifyDatabaseAccess = async (
   pageId: string,
-  expectedDatabaseId: string,
 ): Promise<PageObjectResponse | null> => {
   try {
     const notion = getNotionClient();
@@ -277,7 +276,9 @@ export const verifyDatabaseAccess = async (
     const pageDatabase =
       page.parent.type === "data_source_id" ? page.parent.database_id : null;
 
-    return pageDatabase === expectedDatabaseId ? page : null;
+    return pageDatabase === process.env.NOTION_RECIPES_DATABASE_ID
+      ? page
+      : null;
   } catch (err) {
     throw new Error(`Failed to verify database access`, { cause: err });
   }
