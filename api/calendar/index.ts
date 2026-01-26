@@ -10,6 +10,7 @@ import ical, {
   ICalCalendar,
   ICalCalendarMethod,
 } from "ical-generator";
+import { setResponse, verifyParam } from "../../lib/shared/utils.js";
 import { NotionResponse } from "../../lib/calendar/types.js";
 import { isFullPage } from "@notionhq/client";
 
@@ -63,16 +64,12 @@ export default async function handler(
   res: VercelResponse,
 ): Promise<void> {
   try {
-    const { db: database_id } = req.query;
-
-    if (!database_id) {
-      res.status(400).json({
-        error: "Missing required query param: db (Notion database ID)",
-      });
-      return;
-    }
-
-    const pages = await fetchAllPages(String(database_id));
+    const db = verifyParam(
+      res,
+      req.query.db,
+      "Missing required query param: db",
+    );
+    const pages = await fetchAllPages(db);
 
     const cal = ical({
       method: ICalCalendarMethod.PUBLISH,
@@ -82,6 +79,11 @@ export default async function handler(
     pages.forEach((page) => createEvent(page, cal));
     successResponse(res, cal.toString());
   } catch (error) {
-    res.status(500).json({ detail: String(error), error: "Internal error" });
+    setResponse({
+      error,
+      message: "Error generating calendar",
+      res,
+      status: 500,
+    });
   }
 }
