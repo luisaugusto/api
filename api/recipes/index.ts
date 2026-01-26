@@ -2,6 +2,7 @@ import type {
   Block,
   RichText,
 } from "@tryfabric/martian/build/src/notion/blocks.js";
+import type { CreatePageParameters } from "@notionhq/client";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   addCommentToNotionPage,
@@ -9,16 +10,16 @@ import {
   createNotionPage,
   uploadImageToNotion,
 } from "../../lib/shared/notion.js";
-import { generateData, generateImage } from "../../lib/shared/openai.js";
-import { markdownToBlocks, markdownToRichText } from "@tryfabric/martian";
-import type { CreatePageParameters } from "@notionhq/client";
-import Recipe from "../../lib/recipes/schema.js";
 import {
   buildImagePrompt,
   buildRecipeNotionProperties,
 } from "../../lib/shared/recipes.js";
+import { setResponse, verifyParam } from "../../lib/shared/utils.js";
+import { generateData, generateImage } from "../../lib/shared/openai.js";
+import { markdownToBlocks, markdownToRichText } from "@tryfabric/martian";
 import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
+import Recipe from "../../lib/recipes/schema.js";
 
 const format = zodTextFormat(Recipe, "recipe");
 
@@ -82,19 +83,6 @@ const createRecipe = async (
   });
 };
 
-const validateParams = (
-  database_id: unknown,
-  prompt: unknown,
-): { database_id: string; prompt: string } | { error: string } => {
-  if (!database_id) {
-    return { error: "Missing required query param: db (Notion database ID)" };
-  }
-  if (!prompt) {
-    return { error: "Missing required query param: prompt" };
-  }
-  return { database_id: String(database_id), prompt: String(prompt) };
-};
-
 const generateRecipeWithImage = async (
   prompt: string,
 ): Promise<{
@@ -124,24 +112,30 @@ const generateRecipeWithImage = async (
 
 export default function handler(req: VercelRequest, res: VercelResponse): void {
   try {
-    const validation = validateParams(req.query.db, req.query.prompt);
-
-    if ("error" in validation) {
-      res.status(400).json({ error: validation.error });
-      return;
-    }
+    const db = verifyParam(
+      res,
+      req.query.db,
+      "Missing required query param: db",
+    );
+    const prompt = verifyParam(
+      res,
+      req.query.prompt,
+      "Missing required query param: prompt",
+    );
 
     waitUntil(
-      generateRecipeWithImage(validation.prompt).then(({ cover, recipe }) =>
-        createRecipe(recipe, cover, validation.database_id),
+      generateRecipeWithImage(prompt).then(({ cover, recipe }) =>
+        createRecipe(recipe, cover, db),
       ),
     );
 
-    res.status(200).json("Recipe creation in progress.");
+    res.status(200).json("Recipe creation in progress");
   } catch (error) {
-    res.status(500).json({
-      detail: String(error),
-      error: "Failed to create recipe",
+    setResponse({
+      error,
+      message: "Failed to create recipe",
+      res,
+      status: 500,
     });
   }
 }
