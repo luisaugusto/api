@@ -2,7 +2,6 @@ import type {
   Block,
   RichText,
 } from "@tryfabric/martian/build/src/notion/blocks.js";
-import type { CreatePageParameters } from "@notionhq/client";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   addCommentToNotionPage,
@@ -14,12 +13,13 @@ import {
   buildImagePrompt,
   buildRecipeNotionProperties,
 } from "../../lib/shared/recipes.js";
-import { setResponse, verifyParam } from "../../lib/shared/utils.js";
 import { generateData, generateImage } from "../../lib/shared/openai.js";
 import { markdownToBlocks, markdownToRichText } from "@tryfabric/martian";
+import { setResponse, verifyParam } from "../../lib/shared/utils.js";
+import type { CreatePageParameters } from "@notionhq/client";
+import Recipe from "../../lib/recipes/schema.js";
 import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
-import Recipe from "../../lib/recipes/schema.js";
 
 const format = zodTextFormat(Recipe, "recipe");
 
