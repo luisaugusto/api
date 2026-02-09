@@ -12,7 +12,7 @@
     "@notionhq/client": "^5.8.0",
     "@tryfabric/martian": "^1.2.4",
     "@vercel/functions": "^3.3.6",
-    "@vercel/node": "^5.5.23",
+    "@vercel/node": "^5.5.33",
     "ical-generator": "^10.0.0",
     "openai": "^6.16.0",
     "undici": "^7.21.0",
