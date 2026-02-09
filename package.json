@@ -19,7 +19,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
+    "@eslint/js": "^10.0.1",
     "@types/minimist": "^1.2.5",
     "@types/node": "^25.0.6",
     "eslint": "^9.39.2",
