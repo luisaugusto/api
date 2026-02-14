@@ -96,6 +96,7 @@ const pollBatchUntilComplete = async (
     // eslint-disable-next-line no-await-in-loop
     const batch = await openai.batches.retrieve(batchId);
 
+    // Terminal status: success
     if (batch.status === "completed") {
       if (!batch.output_file_id) {
         throw new Error("Batch completed but no output file ID");
@@ -103,6 +104,7 @@ const pollBatchUntilComplete = async (
       return batch.output_file_id;
     }
 
+    // Terminal statuses: errors
     if (batch.status === "failed") {
       const errors = batch.errors
         ? JSON.stringify(batch.errors)
@@ -113,6 +115,13 @@ const pollBatchUntilComplete = async (
     if (batch.status === "expired") {
       throw new Error("Batch expired before completion");
     }
+
+    if (batch.status === "cancelled") {
+      throw new Error("Batch was cancelled");
+    }
+
+    // Non-terminal statuses: validating, in_progress, cancelling
+    // Continue polling for these states
 
     // eslint-disable-next-line no-await-in-loop
     await sleep(pollIntervalMs);
