@@ -77,8 +77,6 @@ interface BatchRequest {
 const createBatchJsonl = (requests: BatchRequest[]): string =>
   requests.map((req) => JSON.stringify(req)).join("\n");
 
-// Temporary: Task 4 will add await calls for batch processing
-/* eslint-disable require-await */
 // eslint-disable-next-line max-lines-per-function
 export const generateDataAndImageBatch = async <
   T extends ResponseFormatTextConfig,
@@ -103,8 +101,6 @@ export const generateDataAndImageBatch = async <
   >;
   imageB64: string;
 }> => {
-  // @ts-expect-error - TS6133: Will be used in Task 4
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   try {
@@ -133,21 +129,34 @@ export const generateDataAndImageBatch = async <
       url: "/v1/images/generate",
     };
 
-    // @ts-expect-error - TS6133: Will be used in Task 4
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const jsonlContent = createBatchJsonl([dataRequest, imageRequest]);
 
-    // Placeholder - will implement file upload next
-    throw new Error("Not implemented yet");
+    // Step 2: Upload JSONL file
+    const fileBuffer = Buffer.from(jsonlContent, "utf-8");
+    const file = await openai.files.create({
+      file: new File([fileBuffer], "batch.jsonl", { type: "application/jsonl" }),
+      purpose: "batch",
+    });
+
+    // Step 3: Create batch
+    const batch = await openai.batches.create({
+      input_file_id: file.id,
+      endpoint: "/v1/responses",
+      completion_window: "24h",
+    });
+
+    // Step 4: Poll for completion
+    // @ts-expect-error - TS6133: Will be used in Task 5
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const outputFileId = await pollBatchUntilComplete(openai, batch.id);
+
+    // Placeholder - will implement result parsing next
+    throw new Error("Result parsing not implemented yet");
   } catch (err) {
     throw new Error("Failed to generate data and image batch", { cause: err });
   }
 };
-/* eslint-enable require-await */
 
-// This function will be used in Task 3 (generateDataAndImageBatch method)
-// @ts-expect-error - TS6133: Function will be used in upcoming task
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const pollBatchUntilComplete = async (
   openai: OpenAI,
   batchId: string,
