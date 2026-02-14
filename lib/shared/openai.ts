@@ -195,12 +195,48 @@ export const generateDataAndImageBatch = async <
     });
 
     // Step 4: Poll for completion
-    // @ts-expect-error - TS6133: Will be used in Task 5
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const outputFileId = await pollBatchUntilComplete(openai, batch.id);
 
-    // Placeholder - will implement result parsing next
-    throw new Error("Result parsing not implemented yet");
+    // Step 5: Download and parse results
+    const resultsContent = await openai.files.content(outputFileId);
+    const resultsText = await resultsContent.text();
+    const resultLines = resultsText.trim().split("\n");
+
+    let parsedData: NonNullable<ParsedResponse<ExtractParsedContentFromParams<{
+      input: string;
+      instructions: string;
+      model: "gpt-5-mini";
+      text: { format: T };
+    }>>["output_parsed"]> | null = null;
+    let imageB64: string | null = null;
+
+    for (const line of resultLines) {
+      const result = JSON.parse(line);
+
+      if (result.custom_id === "recipe-data") {
+        if (result.error) {
+          throw new Error(`Data generation failed: ${JSON.stringify(result.error)}`);
+        }
+        parsedData = result.response.body.output_parsed;
+      }
+
+      if (result.custom_id === "recipe-image") {
+        if (result.error) {
+          throw new Error(`Image generation failed: ${JSON.stringify(result.error)}`);
+        }
+        imageB64 = result.response.body.data?.[0]?.b64_json;
+      }
+    }
+
+    if (!parsedData) {
+      throw new Error("No parsed data returned from batch");
+    }
+
+    if (!imageB64) {
+      throw new Error("No image data returned from batch");
+    }
+
+    return { data: parsedData, imageB64 };
   } catch (err) {
     throw new Error("Failed to generate data and image batch", { cause: err });
   }
