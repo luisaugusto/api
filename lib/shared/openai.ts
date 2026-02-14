@@ -69,6 +69,8 @@ interface BatchRequest {
   body: Record<string, unknown>;
 }
 
+// This function will be used in Task 3 (generateDataAndImageBatch method)
+// @ts-expect-error - TS6133: Function will be used in upcoming task
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createBatchJsonl = (requests: BatchRequest[]): string =>
   requests.map((req) => JSON.stringify(req)).join("\n");
