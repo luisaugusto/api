@@ -100,7 +100,10 @@ export const generateDataAndImageBatch = async <
     >["output_parsed"]
   >;
   imageB64: string;
+  // eslint-disable-next-line require-await
 }> => {
+  // @ts-expect-error - TS6133: Will be used in Task 4
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   try {
@@ -129,11 +132,12 @@ export const generateDataAndImageBatch = async <
       url: "/v1/images/generate",
     };
 
-    createBatchJsonl([dataRequest, imageRequest]);
+    // @ts-expect-error - TS6133: Will be used in Task 4
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const jsonlContent = createBatchJsonl([dataRequest, imageRequest]);
 
     // Placeholder - will implement file upload next
-    // @ts-expect-error - Placeholder implementation, will be replaced in Task 4
-    return await openai;
+    throw new Error("Not implemented yet");
   } catch (err) {
     throw new Error("Failed to generate data and image batch", { cause: err });
   }
