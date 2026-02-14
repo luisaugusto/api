@@ -68,17 +68,76 @@ export const generateData = async <T extends ResponseFormatTextConfig>({
 };
 
 interface BatchRequest {
+  body: Record<string, unknown>;
   custom_id: string;
   method: string;
   url: string;
-  body: Record<string, unknown>;
 }
 
-// This function will be used in Task 3 (generateDataAndImageBatch method)
-// @ts-expect-error - TS6133: Function will be used in upcoming task
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createBatchJsonl = (requests: BatchRequest[]): string =>
   requests.map((req) => JSON.stringify(req)).join("\n");
+
+// eslint-disable-next-line max-lines-per-function
+export const generateDataAndImageBatch = async <
+  T extends ResponseFormatTextConfig,
+>({
+  input,
+  instructions,
+  format,
+}: {
+  input: string;
+  instructions: string;
+  format: T;
+}): Promise<{
+  data: NonNullable<
+    ParsedResponse<
+      ExtractParsedContentFromParams<{
+        input: string;
+        instructions: string;
+        model: "gpt-5-mini";
+        text: { format: T };
+      }>
+    >["output_parsed"]
+  >;
+  imageB64: string;
+}> => {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+  try {
+    // Step 1: Create JSONL with both requests
+    const dataRequest: BatchRequest = {
+      body: {
+        input,
+        instructions,
+        model: "gpt-5-mini",
+        text: { format },
+      },
+      custom_id: "recipe-data",
+      method: "POST",
+      url: "/v1/responses/parse",
+    };
+
+    const imageRequest: BatchRequest = {
+      body: {
+        model: "gpt-image-1.5",
+        prompt: input,
+        response_format: "b64_json",
+        size: "1024x1024",
+      },
+      custom_id: "recipe-image",
+      method: "POST",
+      url: "/v1/images/generate",
+    };
+
+    createBatchJsonl([dataRequest, imageRequest]);
+
+    // Placeholder - will implement file upload next
+    // @ts-expect-error - Placeholder implementation, will be replaced in Task 4
+    return await openai;
+  } catch (err) {
+    throw new Error("Failed to generate data and image batch", { cause: err });
+  }
+};
 
 // This function will be used in Task 3 (generateDataAndImageBatch method)
 // @ts-expect-error - TS6133: Function will be used in upcoming task
