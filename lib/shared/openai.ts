@@ -77,6 +77,8 @@ interface BatchRequest {
 const createBatchJsonl = (requests: BatchRequest[]): string =>
   requests.map((req) => JSON.stringify(req)).join("\n");
 
+// Temporary: Task 4 will add await calls for batch processing
+/* eslint-disable require-await */
 // eslint-disable-next-line max-lines-per-function
 export const generateDataAndImageBatch = async <
   T extends ResponseFormatTextConfig,
@@ -100,7 +102,6 @@ export const generateDataAndImageBatch = async <
     >["output_parsed"]
   >;
   imageB64: string;
-  // eslint-disable-next-line require-await
 }> => {
   // @ts-expect-error - TS6133: Will be used in Task 4
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -142,6 +143,7 @@ export const generateDataAndImageBatch = async <
     throw new Error("Failed to generate data and image batch", { cause: err });
   }
 };
+/* eslint-enable require-await */
 
 // This function will be used in Task 3 (generateDataAndImageBatch method)
 // @ts-expect-error - TS6133: Function will be used in upcoming task
