@@ -5,6 +5,9 @@ import type {
 import type { ExtractParsedContentFromParams } from "openai/lib/ResponsesParser.mjs";
 import OpenAI from "openai";
 
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 export const generateImage = async (prompt: string): Promise<string> => {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -74,3 +77,39 @@ interface BatchRequest {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createBatchJsonl = (requests: BatchRequest[]): string =>
   requests.map((req) => JSON.stringify(req)).join("\n");
+
+// This function will be used in Task 3 (generateDataAndImageBatch method)
+// @ts-expect-error - TS6133: Function will be used in upcoming task
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const pollBatchUntilComplete = async (
+  openai: OpenAI,
+  batchId: string,
+  maxPollTimeMs: number = 5 * 60 * 1000, // 5 minutes
+  pollIntervalMs: number = 10 * 1000, // 10 seconds
+): Promise<string> => {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < maxPollTimeMs) {
+    const batch = await openai.batches.retrieve(batchId);
+
+    if (batch.status === "completed") {
+      if (!batch.output_file_id) {
+        throw new Error("Batch completed but no output file ID");
+      }
+      return batch.output_file_id;
+    }
+
+    if (batch.status === "failed") {
+      const errors = batch.errors ? JSON.stringify(batch.errors) : "Unknown error";
+      throw new Error(`Batch failed: ${errors}`);
+    }
+
+    if (batch.status === "expired") {
+      throw new Error("Batch expired before completion");
+    }
+
+    await sleep(pollIntervalMs);
+  }
+
+  throw new Error("Batch timeout - taking longer than expected");
+};
