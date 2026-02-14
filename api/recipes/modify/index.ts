@@ -8,7 +8,6 @@ import {
   buildBodyBlocks,
   buildRecipeNotionProperties,
   convertNotionPropertiesToRecipe,
-  generateRecipeImage,
 } from "../../../lib/shared/recipes.js";
 import {
   fetchComment,
@@ -16,10 +15,11 @@ import {
   postComment,
   updatePage,
   updatePageBlocks,
+  uploadImageToNotion,
   verifyDatabaseAccess,
 } from "../../../lib/shared/notion.js";
 import Recipe from "../../../lib/recipes/schema.js";
-import { generateData } from "../../../lib/shared/openai.js";
+import { generateDataAndImageBatch } from "../../../lib/shared/openai.js";
 import { setResponse } from "../../../lib/shared/utils.js";
 import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
@@ -36,7 +36,7 @@ const updateRecipeAndComment = async (
     modificationRequest,
   );
 
-  const updatedRecipe = await generateData({
+  const { data: updatedRecipe, imageB64 } = await generateDataAndImageBatch({
     format,
     input: modificationRequest,
     instructions: modificationPrompt,
@@ -51,7 +51,11 @@ const updateRecipeAndComment = async (
     title: [{ text: { content: updatedRecipe.title } }],
   };
 
-  const cover = await generateRecipeImage(updatedRecipe);
+  const fileUploadId = await uploadImageToNotion(imageB64, updatedRecipe.title);
+  const cover = {
+    file_upload: { id: fileUploadId },
+    type: "file_upload" as const,
+  };
 
   await updatePage(pageId, cover, notionProperties);
 
