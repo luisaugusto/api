@@ -77,6 +77,53 @@ interface BatchRequest {
 const createBatchJsonl = (requests: BatchRequest[]): string =>
   requests.map((req) => JSON.stringify(req)).join("\n");
 
+const pollBatchUntilComplete = async (
+  openai: OpenAI,
+  batchId: string,
+  options: { maxPollTimeMs?: number; pollIntervalMs?: number } = {},
+): Promise<string> => {
+  const maxPollTimeMs = options.maxPollTimeMs ?? 5 * 60 * 1000;
+  const pollIntervalMs = options.pollIntervalMs ?? 10 * 1000;
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < maxPollTimeMs) {
+    // eslint-disable-next-line no-await-in-loop
+    const batch = await openai.batches.retrieve(batchId);
+
+    // Terminal status: success
+    if (batch.status === "completed") {
+      if (!batch.output_file_id) {
+        throw new Error("Batch completed but no output file ID");
+      }
+      return batch.output_file_id;
+    }
+
+    // Terminal statuses: errors
+    if (batch.status === "failed") {
+      const errors = batch.errors
+        ? JSON.stringify(batch.errors)
+        : "Unknown error";
+      throw new Error(`Batch failed: ${errors}`);
+    }
+
+    if (batch.status === "expired") {
+      throw new Error("Batch expired before completion");
+    }
+
+    if (batch.status === "cancelled") {
+      throw new Error("Batch was cancelled");
+    }
+
+    // Non-terminal statuses: validating, in_progress, cancelling
+    // Continue polling for these states
+
+    // eslint-disable-next-line no-await-in-loop
+    await sleep(pollIntervalMs);
+  }
+
+  throw new Error("Batch timeout - taking longer than expected");
+};
+
 // eslint-disable-next-line max-lines-per-function
 export const generateDataAndImageBatch = async <
   T extends ResponseFormatTextConfig,
@@ -134,15 +181,17 @@ export const generateDataAndImageBatch = async <
     // Step 2: Upload JSONL file
     const fileBuffer = Buffer.from(jsonlContent, "utf-8");
     const file = await openai.files.create({
-      file: new File([fileBuffer], "batch.jsonl", { type: "application/jsonl" }),
+      file: new File([fileBuffer], "batch.jsonl", {
+        type: "application/jsonl",
+      }),
       purpose: "batch",
     });
 
     // Step 3: Create batch
     const batch = await openai.batches.create({
-      input_file_id: file.id,
-      endpoint: "/v1/responses",
       completion_window: "24h",
+      endpoint: "/v1/responses/parse" as "/v1/responses",
+      input_file_id: file.id,
     });
 
     // Step 4: Poll for completion
@@ -155,51 +204,4 @@ export const generateDataAndImageBatch = async <
   } catch (err) {
     throw new Error("Failed to generate data and image batch", { cause: err });
   }
-};
-
-const pollBatchUntilComplete = async (
-  openai: OpenAI,
-  batchId: string,
-  options: { maxPollTimeMs?: number; pollIntervalMs?: number } = {},
-): Promise<string> => {
-  const maxPollTimeMs = options.maxPollTimeMs ?? 5 * 60 * 1000;
-  const pollIntervalMs = options.pollIntervalMs ?? 10 * 1000;
-  const startTime = Date.now();
-
-  while (Date.now() - startTime < maxPollTimeMs) {
-    // eslint-disable-next-line no-await-in-loop
-    const batch = await openai.batches.retrieve(batchId);
-
-    // Terminal status: success
-    if (batch.status === "completed") {
-      if (!batch.output_file_id) {
-        throw new Error("Batch completed but no output file ID");
-      }
-      return batch.output_file_id;
-    }
-
-    // Terminal statuses: errors
-    if (batch.status === "failed") {
-      const errors = batch.errors
-        ? JSON.stringify(batch.errors)
-        : "Unknown error";
-      throw new Error(`Batch failed: ${errors}`);
-    }
-
-    if (batch.status === "expired") {
-      throw new Error("Batch expired before completion");
-    }
-
-    if (batch.status === "cancelled") {
-      throw new Error("Batch was cancelled");
-    }
-
-    // Non-terminal statuses: validating, in_progress, cancelling
-    // Continue polling for these states
-
-    // eslint-disable-next-line no-await-in-loop
-    await sleep(pollIntervalMs);
-  }
-
-  throw new Error("Batch timeout - taking longer than expected");
 };
