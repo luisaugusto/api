@@ -6,7 +6,9 @@ import type { ExtractParsedContentFromParams } from "openai/lib/ResponsesParser.
 import OpenAI from "openai";
 
 const sleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 export const generateImage = async (prompt: string): Promise<string> => {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -84,12 +86,14 @@ const createBatchJsonl = (requests: BatchRequest[]): string =>
 const pollBatchUntilComplete = async (
   openai: OpenAI,
   batchId: string,
-  maxPollTimeMs: number = 5 * 60 * 1000, // 5 minutes
-  pollIntervalMs: number = 10 * 1000, // 10 seconds
+  options: { maxPollTimeMs?: number; pollIntervalMs?: number } = {},
 ): Promise<string> => {
+  const maxPollTimeMs = options.maxPollTimeMs ?? 5 * 60 * 1000;
+  const pollIntervalMs = options.pollIntervalMs ?? 10 * 1000;
   const startTime = Date.now();
 
   while (Date.now() - startTime < maxPollTimeMs) {
+    // eslint-disable-next-line no-await-in-loop
     const batch = await openai.batches.retrieve(batchId);
 
     if (batch.status === "completed") {
@@ -100,7 +104,9 @@ const pollBatchUntilComplete = async (
     }
 
     if (batch.status === "failed") {
-      const errors = batch.errors ? JSON.stringify(batch.errors) : "Unknown error";
+      const errors = batch.errors
+        ? JSON.stringify(batch.errors)
+        : "Unknown error";
       throw new Error(`Batch failed: ${errors}`);
     }
 
@@ -108,6 +114,7 @@ const pollBatchUntilComplete = async (
       throw new Error("Batch expired before completion");
     }
 
+    // eslint-disable-next-line no-await-in-loop
     await sleep(pollIntervalMs);
   }
 
