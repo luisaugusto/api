@@ -124,7 +124,7 @@ const pollBatchUntilComplete = async (
   throw new Error("Batch timeout - taking longer than expected");
 };
 
-// eslint-disable-next-line max-lines-per-function
+// eslint-disable-next-line max-lines-per-function, max-statements
 export const generateDataAndImageBatch = async <
   T extends ResponseFormatTextConfig,
 >({
@@ -202,12 +202,16 @@ export const generateDataAndImageBatch = async <
     const resultsText = await resultsContent.text();
     const resultLines = resultsText.trim().split("\n");
 
-    let parsedData: NonNullable<ParsedResponse<ExtractParsedContentFromParams<{
-      input: string;
-      instructions: string;
-      model: "gpt-5-mini";
-      text: { format: T };
-    }>>["output_parsed"]> | null = null;
+    let parsedData: NonNullable<
+      ParsedResponse<
+        ExtractParsedContentFromParams<{
+          input: string;
+          instructions: string;
+          model: "gpt-5-mini";
+          text: { format: T };
+        }>
+      >["output_parsed"]
+    > | null = null;
     let imageB64: string | null = null;
 
     for (const line of resultLines) {
@@ -215,14 +219,18 @@ export const generateDataAndImageBatch = async <
 
       if (result.custom_id === "recipe-data") {
         if (result.error) {
-          throw new Error(`Data generation failed: ${JSON.stringify(result.error)}`);
+          throw new Error(
+            `Data generation failed: ${JSON.stringify(result.error)}`,
+          );
         }
         parsedData = result.response.body.output_parsed;
       }
 
       if (result.custom_id === "recipe-image") {
         if (result.error) {
-          throw new Error(`Image generation failed: ${JSON.stringify(result.error)}`);
+          throw new Error(
+            `Image generation failed: ${JSON.stringify(result.error)}`,
+          );
         }
         imageB64 = result.response.body.data?.[0]?.b64_json;
       }
