@@ -61,3 +61,14 @@ export const generateData = async <T extends ResponseFormatTextConfig>({
     throw new Error("Failed to generate data", { cause: err });
   }
 };
+
+interface BatchRequest {
+  custom_id: string;
+  method: string;
+  url: string;
+  body: Record<string, unknown>;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const createBatchJsonl = (requests: BatchRequest[]): string =>
+  requests.map((req) => JSON.stringify(req)).join("\n");
