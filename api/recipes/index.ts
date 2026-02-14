@@ -7,16 +7,16 @@ import {
   addCommentToNotionPage,
   convertToBlockObjectRequest,
   createNotionPage,
+  uploadImageToNotion,
 } from "../../lib/shared/notion.js";
 import {
   buildRecipeNotionProperties,
-  generateRecipeImage,
 } from "../../lib/shared/recipes.js";
 import { markdownToBlocks, markdownToRichText } from "@tryfabric/martian";
 import { setResponse, verifyParam } from "../../lib/shared/utils.js";
 import type { CreatePageParameters } from "@notionhq/client";
 import Recipe from "../../lib/recipes/schema.js";
-import { generateData } from "../../lib/shared/openai.js";
+import { generateDataAndImageBatch } from "../../lib/shared/openai.js";
 import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
 
@@ -96,16 +96,19 @@ export default function handler(req: VercelRequest, res: VercelResponse): void {
     );
 
     waitUntil(
-      generateData({
+      generateDataAndImageBatch({
         format,
         input: prompt,
         instructions:
           "You are a helpful assistant that provides detailed cooking recipes based on user prompts. All the instructions and details should be should be clear, concise, and easy to follow.",
-      }).then((recipe) =>
-        generateRecipeImage(recipe).then((cover) =>
-          createRecipe(recipe, cover, db),
-        ),
-      ),
+      }).then(async ({ data: recipe, imageB64 }) => {
+        const fileUploadId = await uploadImageToNotion(imageB64, recipe.title);
+        const cover = {
+          file_upload: { id: fileUploadId },
+          type: "file_upload" as const,
+        };
+        return createRecipe(recipe, cover, db);
+      }),
     );
 
     res.status(200).json("Recipe creation in progress");

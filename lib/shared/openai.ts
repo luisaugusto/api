@@ -5,6 +5,11 @@ import type {
 import type { ExtractParsedContentFromParams } from "openai/lib/ResponsesParser.mjs";
 import OpenAI from "openai";
 
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
 export const generateImage = async (prompt: string): Promise<string> => {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -59,5 +64,188 @@ export const generateData = async <T extends ResponseFormatTextConfig>({
     return response.output_parsed;
   } catch (err) {
     throw new Error("Failed to generate data", { cause: err });
+  }
+};
+
+interface BatchRequest {
+  body: Record<string, unknown>;
+  custom_id: string;
+  method: string;
+  url: string;
+}
+
+const createBatchJsonl = (requests: BatchRequest[]): string =>
+  requests.map((req) => JSON.stringify(req)).join("\n");
+
+const pollBatchUntilComplete = async (
+  openai: OpenAI,
+  batchId: string,
+  options: { maxPollTimeMs?: number; pollIntervalMs?: number } = {},
+): Promise<string> => {
+  const maxPollTimeMs = options.maxPollTimeMs ?? 5 * 60 * 1000;
+  const pollIntervalMs = options.pollIntervalMs ?? 10 * 1000;
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < maxPollTimeMs) {
+    // eslint-disable-next-line no-await-in-loop
+    const batch = await openai.batches.retrieve(batchId);
+
+    // Terminal status: success
+    if (batch.status === "completed") {
+      if (!batch.output_file_id) {
+        throw new Error("Batch completed but no output file ID");
+      }
+      return batch.output_file_id;
+    }
+
+    // Terminal statuses: errors
+    if (batch.status === "failed") {
+      const errors = batch.errors
+        ? JSON.stringify(batch.errors)
+        : "Unknown error";
+      throw new Error(`Batch failed: ${errors}`);
+    }
+
+    if (batch.status === "expired") {
+      throw new Error("Batch expired before completion");
+    }
+
+    if (batch.status === "cancelled") {
+      throw new Error("Batch was cancelled");
+    }
+
+    // Non-terminal statuses: validating, in_progress, cancelling
+    // Continue polling for these states
+
+    // eslint-disable-next-line no-await-in-loop
+    await sleep(pollIntervalMs);
+  }
+
+  throw new Error("Batch timeout - taking longer than expected");
+};
+
+// eslint-disable-next-line max-lines-per-function, max-statements
+export const generateDataAndImageBatch = async <
+  T extends ResponseFormatTextConfig,
+>({
+  input,
+  instructions,
+  format,
+}: {
+  input: string;
+  instructions: string;
+  format: T;
+}): Promise<{
+  data: NonNullable<
+    ParsedResponse<
+      ExtractParsedContentFromParams<{
+        input: string;
+        instructions: string;
+        model: "gpt-5-mini";
+        text: { format: T };
+      }>
+    >["output_parsed"]
+  >;
+  imageB64: string;
+}> => {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+  try {
+    // Step 1: Create JSONL with both requests
+    const dataRequest: BatchRequest = {
+      body: {
+        input,
+        instructions,
+        model: "gpt-5-mini",
+        text: { format },
+      },
+      custom_id: "recipe-data",
+      method: "POST",
+      url: "/v1/responses/parse",
+    };
+
+    const imageRequest: BatchRequest = {
+      body: {
+        model: "gpt-image-1.5",
+        prompt: input,
+        response_format: "b64_json",
+        size: "1024x1024",
+      },
+      custom_id: "recipe-image",
+      method: "POST",
+      url: "/v1/images/generate",
+    };
+
+    const jsonlContent = createBatchJsonl([dataRequest, imageRequest]);
+
+    // Step 2: Upload JSONL file
+    const fileBuffer = Buffer.from(jsonlContent, "utf-8");
+    const file = await openai.files.create({
+      file: new File([fileBuffer], "batch.jsonl", {
+        type: "application/jsonl",
+      }),
+      purpose: "batch",
+    });
+
+    // Step 3: Create batch
+    const batch = await openai.batches.create({
+      completion_window: "24h",
+      endpoint: "/v1/responses/parse" as "/v1/responses",
+      input_file_id: file.id,
+    });
+
+    // Step 4: Poll for completion
+    const outputFileId = await pollBatchUntilComplete(openai, batch.id);
+
+    // Step 5: Download and parse results
+    const resultsContent = await openai.files.content(outputFileId);
+    const resultsText = await resultsContent.text();
+    const resultLines = resultsText.trim().split("\n");
+
+    let parsedData: NonNullable<
+      ParsedResponse<
+        ExtractParsedContentFromParams<{
+          input: string;
+          instructions: string;
+          model: "gpt-5-mini";
+          text: { format: T };
+        }>
+      >["output_parsed"]
+    > | null = null;
+    let imageB64: string | null = null;
+
+    for (const line of resultLines) {
+      const result = JSON.parse(line);
+
+      if (result.custom_id === "recipe-data") {
+        if (result.error) {
+          throw new Error(
+            `Data generation failed: ${JSON.stringify(result.error)}`,
+          );
+        }
+        parsedData = result.response.body.output_parsed;
+      }
+
+      if (result.custom_id === "recipe-image") {
+        if (result.error) {
+          throw new Error(
+            `Image generation failed: ${JSON.stringify(result.error)}`,
+          );
+        }
+        imageB64 = result.response.body.data?.[0]?.b64_json;
+      }
+    }
+
+    if (!parsedData) {
+      throw new Error("No parsed data returned from batch");
+    }
+
+    if (!imageB64) {
+      throw new Error("No image data returned from batch");
+    }
+
+    return { data: parsedData, imageB64 };
+  } catch (err) {
+    throw new Error("Failed to generate data and image batch", { cause: err });
   }
 };
