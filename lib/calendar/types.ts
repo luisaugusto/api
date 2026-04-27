@@ -14,6 +14,8 @@ export enum CalendarProp {
   URL = "URL",
   Notes = "Notes",
   Name = "Name",
+  Event = "Event",
+  Done = "Done",
 }
 export type NotionPropertyValue = PageObjectResponse["properties"][string];
 export type NotionDate = Extract<NotionPropertyValue, { type: "date" }>["date"];
@@ -34,9 +36,10 @@ export interface Props {
   date: NotionDate | undefined;
   place: NotionPlace | null | undefined;
   notes: string;
-  status: string;
+  status: string | undefined;
   url: string | null;
   title: string;
+  done: boolean;
 }
 
 export const emoji = {

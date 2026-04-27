@@ -13,6 +13,7 @@ export default defineConfig(
       "@typescript-eslint/explicit-function-return-type": "error",
       "@typescript-eslint/unified-signatures": "off",
       camelcase: ["off"],
+      complexity: ["error", 21],
       "init-declarations": ["off"],
       "max-statements": ["error", 20],
       "no-magic-numbers": ["off"],

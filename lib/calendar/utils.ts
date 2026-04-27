@@ -15,7 +15,8 @@ export const isValidEvent = (
 ): date is NonNullable<NotionDate> =>
   props.status !== "Cancelled" &&
   props.category !== "Flights" &&
-  date?.start !== null;
+  date?.start !== null &&
+  props.done !== true;
 
 export const getProp = <T extends NotionPropertyValue["type"]>(
   props: PageObjectResponse["properties"],
@@ -34,12 +35,10 @@ const getEmoji = (category: string | undefined): string =>
 export const getProps = (
   properties: PageObjectResponse["properties"],
 ): Props => {
-  const status = String(
-    getProp(properties, CalendarProp.Status, "status")?.status?.name,
-  );
-  const allDay = Boolean(
-    getProp(properties, CalendarProp.AllDay, "checkbox")?.checkbox,
-  );
+  const status = getProp(properties, CalendarProp.Status, "status")?.status
+    ?.name;
+  const allDay =
+    getProp(properties, CalendarProp.AllDay, "checkbox")?.checkbox ?? true;
   const date = getProp(properties, CalendarProp.Date, "date")?.date;
   const category = getProp(properties, CalendarProp.Category, "select")?.select
     ?.name;
@@ -49,19 +48,29 @@ export const getProps = (
     getProp(properties, CalendarProp.Notes, "rich_text")
       ?.rich_text.map((text) => text.plain_text)
       .join("") || "";
+
+  const titlePrefix =
+    status === undefined || ["Scheduled", "Reserved"].includes(status)
+      ? ""
+      : "[Pending] ";
+
+  const nameTitle = getProp(properties, CalendarProp.Name, "title")
+    ?.title.map((text) => text.plain_text)
+    .join("");
+  const eventTitle = getProp(properties, CalendarProp.Event, "title")
+    ?.title.map((text) => text.plain_text)
+    .join("");
   const title =
-    getEmoji(category) +
-    (["Scheduled", "Reserved"].includes(status) ? "" : "[Pending] ") +
-    String(
-      getProp(properties, CalendarProp.Name, "title")
-        ?.title.map((text) => text.plain_text)
-        .join(""),
-    );
+    getEmoji(category) + titlePrefix + String(eventTitle || nameTitle);
+
+  const done =
+    getProp(properties, CalendarProp.Done, "checkbox")?.checkbox ?? false;
 
   return {
     allDay,
     category,
     date,
+    done,
     notes,
     place,
     status,
