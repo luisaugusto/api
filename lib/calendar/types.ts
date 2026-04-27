@@ -36,7 +36,7 @@ export interface Props {
   date: NotionDate | undefined;
   place: NotionPlace | null | undefined;
   notes: string;
-  status: string;
+  status: string | undefined;
   url: string | null;
   title: string;
   done: boolean;

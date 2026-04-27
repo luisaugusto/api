@@ -15,7 +15,8 @@ export const isValidEvent = (
 ): date is NonNullable<NotionDate> =>
   props.status !== "Cancelled" &&
   props.category !== "Flights" &&
-  date?.start !== null;
+  date?.start !== null &&
+  props.done !== true;
 
 export const getProp = <T extends NotionPropertyValue["type"]>(
   props: PageObjectResponse["properties"],
@@ -72,7 +73,7 @@ export const getProps = (
     done,
     notes,
     place,
-    status: status ?? "",
+    status,
     title,
     url,
   };
