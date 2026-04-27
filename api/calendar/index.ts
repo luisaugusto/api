@@ -19,8 +19,8 @@ const createEvent = (page: NotionResponse, cal: ICalCalendar): void => {
 
   const props = getProps(page.properties);
 
-  const { date } = props;
-  if (!isValidEvent(props, date)) return;
+  const { date, done } = props;
+  if (!isValidEvent(props, date) || done) return;
 
   const { endDate, startDate } = getDateRange(date, props.allDay);
 

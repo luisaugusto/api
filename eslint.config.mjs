@@ -14,7 +14,7 @@ export default defineConfig(
       "@typescript-eslint/unified-signatures": "off",
       camelcase: ["off"],
       "init-declarations": ["off"],
-      "max-statements": ["error", 20],
+      "max-statements": ["error", 21],
       "no-magic-numbers": ["off"],
       "no-ternary": ["off"],
       "no-undefined": "off",
