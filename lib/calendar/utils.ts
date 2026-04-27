@@ -63,7 +63,7 @@ export const getProps = (
     getEmoji(category) + titlePrefix + String(eventTitle || nameTitle);
 
   const done =
-    getProp(properties, CalendarProp.AllDay, "checkbox")?.checkbox ?? false;
+    getProp(properties, CalendarProp.Done, "checkbox")?.checkbox ?? false;
 
   return {
     allDay,
