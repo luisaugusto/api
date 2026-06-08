@@ -13,7 +13,7 @@
     "@tryfabric/martian": "^1.2.4",
     "@vercel/functions": "^3.6.1",
     "@vercel/node": "^5.8.4",
-    "ical-generator": "^10.2.0",
+    "ical-generator": "^11.0.0",
     "openai": "^6.39.0",
     "undici": "^8.3.0",
     "zod": "^4.4.3"
