@@ -24,7 +24,7 @@ export default zod.object({
   practicePrompt: zod
     .string()
     .describe(
-      "Give a homework prompt for the user so that they can practice the tip. You can use markdown formatting for emphasis. Write the instructions in English — the user will answer in Spanish — and keep only the Spanish material they must work with (words to use, sentences to translate) in Spanish.",
+      "Give a homework prompt for the user so that they can practice the tip. You can use markdown formatting for emphasis. Write the instructions in English — the user will answer in Spanish — and keep only the Spanish material they must work with (words to use, sentences to translate) in Spanish. Before you finish, solve every exercise item yourself and confirm it has at least one answer that is grammatically correct and natural in Spanish, with the target word in a position the language actually allows. Watch for sentences that already carry their own negation or that force a word into a slot where a different expression is required. Rewrite or drop any item that has no valid answer rather than leaving it in.",
     ),
   subcategory: zod.enum([
     "Verb Conjugation",

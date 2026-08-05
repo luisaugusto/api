@@ -85,7 +85,11 @@ Language rules, which apply no matter what language the request is written in:
 - Write everything that teaches or instructs in English: the title, the TLDR, the explanation, and the practice prompt, including any headings, labels, bullet lead-ins, and commentary.
 - Write in Spanish only the language being taught: example sentences, phrases, and the Spanish words or expressions the tip is about. Keep those in Spanish inside the English text rather than translating them away.
 - Follow every Spanish example, in any section, with a short English translation or gloss so I never have to decode the explanation itself.
-- Never write an explanation or a practice prompt in Spanish, even if the topic, the request, or the examples are Spanish.`,
+- Never write an explanation or a practice prompt in Spanish, even if the topic, the request, or the examples are Spanish.
+
+Accuracy rules for every Spanish sentence you write, in examples and in exercises alike:
+- Check that each sentence is grammatical and natural, with each word in a position Spanish actually allows, before you include it.
+- When you write an exercise, work through it yourself first and make sure a correct answer exists. An item the learner cannot answer correctly teaches the wrong thing, so rewrite it or leave it out.`,
   });
 
   if (!response) {
