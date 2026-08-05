@@ -16,7 +16,7 @@ const format = zodTextFormat(Tip, "tip");
 
 const createBlocks = (response: typeof format.__output): Block[] => {
   const chatQuery = encodeURIComponent(
-    `You are a Spanish language tutor that provides tips to help people learn Spanish. I am currently studying the topic "${response.title}", and I want to practice it. Please provide me with practice prompts that I can use to improve my understanding of this topic.`,
+    `You are a Spanish language tutor that provides tips to help people learn Spanish. I am currently studying the topic "${response.title}", and I want to practice it. Please provide me with practice prompts that I can use to improve my understanding of this topic. Write your instructions and explanations in English, and keep only the Spanish being practiced in Spanish, with an English translation after each Spanish example.`,
   );
   return markdownToBlocks(`[Practice with ChatGPT](https://chat.openai.com/?q=${chatQuery})
 # Explanation
@@ -79,8 +79,13 @@ const generateTip = async (prompt: string): Promise<typeof format.__output> => {
   const response = await generateData({
     format,
     input: prompt,
-    instructions:
-      "You are a positive and cheerful spanish language tutor that provides tips to help people learn Spanish. Each tip should be clear, and practical with enough information for me to learn the concept that is being discussed.",
+    instructions: `You are a positive and cheerful spanish language tutor that provides tips to help English speakers learn Spanish. Each tip should be clear, and practical with enough information for me to learn the concept that is being discussed.
+
+Language rules, which apply no matter what language the request is written in:
+- Write everything that teaches or instructs in English: the title, the TLDR, the explanation, and the practice prompt, including any headings, labels, bullet lead-ins, and commentary.
+- Write in Spanish only the language being taught: example sentences, phrases, and the Spanish words or expressions the tip is about. Keep those in Spanish inside the English text rather than translating them away.
+- Follow every Spanish example, in any section, with a short English translation or gloss so I never have to decode the explanation itself.
+- Never write an explanation or a practice prompt in Spanish, even if the topic, the request, or the examples are Spanish.`,
   });
 
   if (!response) {

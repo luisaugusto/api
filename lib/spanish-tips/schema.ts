@@ -10,7 +10,9 @@ export default zod.object({
   ]),
   explanation: zod
     .string()
-    .describe("A clear explanation of the tip in a markdown format."),
+    .describe(
+      "A clear explanation of the tip in a markdown format. Write the explanation itself in English, including all headings, labels and commentary. Keep the Spanish words, phrases and example sentences being taught in Spanish, and follow each one with a short English translation or gloss.",
+    ),
   level: zod.enum([
     "🟢 A1: Beginner",
     "🟡 A2:Elementary",
@@ -22,7 +24,7 @@ export default zod.object({
   practicePrompt: zod
     .string()
     .describe(
-      "Give a homework prompt for the user so that they can practice the tip. You can use markdown formatting for emphasis.",
+      "Give a homework prompt for the user so that they can practice the tip. You can use markdown formatting for emphasis. Write the instructions in English — the user will answer in Spanish — and keep only the Spanish material they must work with (words to use, sentences to translate) in Spanish.",
     ),
   subcategory: zod.enum([
     "Verb Conjugation",
@@ -43,15 +45,17 @@ export default zod.object({
   ]),
   title: zod
     .string()
-    .describe("A concise title for the tip, ideally 5-10 words."),
+    .describe(
+      'A concise title for the tip, ideally 5-10 words, written in English apart from the Spanish word or phrase the tip is about, e.g. "Tal vez vs. Quizá(s): nuance and mood".',
+    ),
   tldr: zod
     .string()
     .describe(
-      "A brief summary of the explanation in 1-2 sentences for a general response to the prompt.",
+      "A brief summary of the explanation in 1-2 sentences for a general response to the prompt, written in English apart from the Spanish terms being discussed.",
     ),
   uses: zod
     .string()
     .describe(
-      "Put the tip into practice by providing 2-3 spanish sentences or phrases that show the tip in use in a markdown format.",
+      "Put the tip into practice by providing 2-3 spanish sentences or phrases that show the tip in use in a markdown format. The example sentences themselves must stay in Spanish; add a short English translation or note in parentheses after each one.",
     ),
 });
