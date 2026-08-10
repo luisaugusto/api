@@ -2,17 +2,19 @@
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
-    // "rootDir": "./src",
+    // rootDir is set explicitly: TypeScript 7 defaults it to the directory
+    // holding this tsconfig rather than inferring it from the input files.
+    "rootDir": ".",
     "outDir": "./dist",
-    // "noEmit": true,
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "nodenext",
     "target": "esnext",
-    // "types": [],
     // For nodejs:
     "lib": ["esnext"],
+    // types is set explicitly: TypeScript 7 no longer auto-discovers
+    // every package under node_modules/@types.
     "types": ["node"],
     // and npm install -D @types/node
 

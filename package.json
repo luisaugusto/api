@@ -5,8 +5,10 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "lint": "npx eslint '**/*.ts' && npx prettier --check '**/*.ts' && npx tsc --noEmit",
-    "lint:fix": "npx eslint '**/*.ts' --fix && npx prettier --write '**/*.ts'"
+    "lint": "npx eslint '**/*.ts' && npx prettier --check '**/*.ts' && npm run typecheck && npm run typecheck:ts6",
+    "lint:fix": "npx eslint '**/*.ts' --fix && npx prettier --write '**/*.ts'",
+    "typecheck": "node node_modules/typescript7/bin/tsc --noEmit",
+    "typecheck:ts6": "npx tsc6 --noEmit"
   },
   "dependencies": {
     "@notionhq/client": "^5.22.0",
@@ -25,7 +27,8 @@
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.6",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.66.0"
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "typescript-eslint": "^8.66.0",
+    "typescript7": "npm:typescript@^7.0.2"
   }
 }

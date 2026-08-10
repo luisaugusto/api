@@ -140,3 +140,24 @@ Examples:
 
 ## Security
 - Anyone with the URL can view the ICS/API responses. For private use, add a `key=...` query param check in the API handlers and pass it in your URLs.
+
+## TypeScript toolchain
+
+This project type-checks with **TypeScript 7**, the native Go compiler. Because TypeScript 7 has no stable programmatic API yet, and `typescript-eslint` 8.x still imports the TypeScript 6 compiler API, the two live side by side:
+
+| Dependency | What it is | Used by |
+| --- | --- | --- |
+| `typescript7` (alias of `typescript@7`) | The real Go-based compiler | `npm run typecheck` |
+| `typescript` (alias of `@typescript/typescript6`) | Microsoft's TypeScript 6 API compatibility shim | `typescript-eslint` / ESLint, `npm run typecheck:ts6` |
+
+Scripts:
+
+```bash
+npm run lint            # eslint + prettier + both type-checks
+npm run typecheck       # TypeScript 7 (authoritative)
+npm run typecheck:ts6   # TypeScript 6, kept as a transitional cross-check
+```
+
+> **Note:** `npx tsc` resolves to the TypeScript **6** binary, since the shim pulls in `typescript@6` under the hood. Always use `npm run typecheck` to invoke TypeScript 7.
+
+Once `typescript-eslint` supports TypeScript 7, collapse this back to a single dependency: drop `@typescript/typescript6`, rename the `typescript7` alias back to `typescript`, and remove the `typecheck:ts6` script.
