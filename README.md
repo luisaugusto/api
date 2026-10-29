@@ -28,6 +28,22 @@ This project provides serverless endpoints for various Notion integrations:
    ```
    You can create a pretty URL `/calendar.ics?db=...` thanks to `vercel.json`.
 
+## Development checks
+
+Install the locked dependencies with `npm ci`, then run `npm run lint` for ESLint,
+Prettier, and TypeScript type checking.
+
+The `tsc` executable uses the native TypeScript 7 compiler, installed under the
+`@typescript/native` npm alias. The `typescript` dependency aliases
+`@typescript/typescript6` so typescript-eslint can continue using the supported
+TypeScript 6 JavaScript API. This follows Microsoft's
+[side-by-side setup](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/#running-side-by-side-with-typescript-6.0);
+typescript-eslint does not yet support the TypeScript 7 API directly. Keep both
+aliases until that support is stable. `npx tsc --version` should report 7.0.2,
+while `npx tsc6 --version` reports 6.0.3 with the current lockfile. CI also checks
+that `tsc` resolves to version 7, so a dependency change cannot silently switch
+type checking back to TypeScript 6.
+
 ## Content Generation APIs
 
 ### Spanish Tips (`/api/spanish-tips`)
