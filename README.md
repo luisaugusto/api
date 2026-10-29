@@ -40,7 +40,9 @@ TypeScript 6 JavaScript API. This follows Microsoft's
 [side-by-side setup](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/#running-side-by-side-with-typescript-6.0);
 typescript-eslint does not yet support the TypeScript 7 API directly. Keep both
 aliases until that support is stable. `npx tsc --version` should report 7.0.2,
-while `npx tsc6 --version` reports the compatibility compiler's version.
+while `npx tsc6 --version` reports 6.0.3 with the current lockfile. CI also checks
+that `tsc` resolves to version 7, so a dependency change cannot silently switch
+type checking back to TypeScript 6.
 
 ## Content Generation APIs
 

@@ -26,3 +26,9 @@ jobs:
 
       - name: Run lint
         run: npm run lint
+
+      - name: Verify TypeScript 7 compiler
+        run: |
+          compiler_version="$(npx --no-install tsc --version)"
+          echo "$compiler_version"
+          [[ "$compiler_version" == "Version 7."* ]]
