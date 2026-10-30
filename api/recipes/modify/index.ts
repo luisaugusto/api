@@ -2,14 +2,14 @@ import {
   NotionWebhookPayload,
   buildModificationPrompt,
   extractModificationRequest,
-} from "../../../lib/recipes/modify/helpers.js";
+} from "@lib/recipes/modify/helpers.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   buildBodyBlocks,
   buildRecipeNotionProperties,
   convertNotionPropertiesToRecipe,
   generateRecipeImage,
-} from "../../../lib/shared/recipes.js";
+} from "@lib/shared/recipes.js";
 import {
   fetchComment,
   fetchPageBlocks,
@@ -17,10 +17,10 @@ import {
   updatePage,
   updatePageBlocks,
   verifyDatabaseAccess,
-} from "../../../lib/shared/notion.js";
-import Recipe from "../../../lib/recipes/schema.js";
-import { generateData } from "../../../lib/shared/openai.js";
-import { setResponse } from "../../../lib/shared/utils.js";
+} from "@lib/shared/notion.js";
+import Recipe from "@lib/recipes/schema.js";
+import { generateData } from "@lib/shared/openai.js";
+import { setResponse } from "@lib/shared/utils.js";
 import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
 

@@ -7,16 +7,16 @@ import {
   addCommentToNotionPage,
   convertToBlockObjectRequest,
   createNotionPage,
-} from "../../lib/shared/notion.js";
+} from "@lib/shared/notion.js";
 import {
   buildRecipeNotionProperties,
   generateRecipeImage,
-} from "../../lib/shared/recipes.js";
+} from "@lib/shared/recipes.js";
 import { markdownToBlocks, markdownToRichText } from "@tryfabric/martian";
-import { setResponse, verifyParam } from "../../lib/shared/utils.js";
+import { setResponse, verifyParam } from "@lib/shared/utils.js";
 import type { CreatePageParameters } from "@notionhq/client";
-import Recipe from "../../lib/recipes/schema.js";
-import { generateData } from "../../lib/shared/openai.js";
+import Recipe from "@lib/recipes/schema.js";
+import { generateData } from "@lib/shared/openai.js";
 import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
 

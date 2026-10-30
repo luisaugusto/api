@@ -1,4 +1,4 @@
-import Recipe from "../schema.js";
+import Recipe from "@lib/recipes/schema.js";
 import { zodTextFormat } from "openai/helpers/zod";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

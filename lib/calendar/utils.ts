@@ -5,7 +5,7 @@ import {
   NotionResponse,
   Props,
   emoji,
-} from "./types.js";
+} from "@lib/calendar/types.js";
 import { Client } from "@notionhq/client";
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints.js";
 
