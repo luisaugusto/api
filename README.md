@@ -44,6 +44,25 @@ while `npx tsc6 --version` reports 6.0.3 with the current lockfile. CI also chec
 that `tsc` resolves to version 7, so a dependency change cannot silently switch
 type checking back to TypeScript 6.
 
+### Library imports
+
+Use `@lib/...` for imports into `lib`, including imports between library modules:
+
+```ts
+import { setResponse } from "@lib/shared/utils.js";
+```
+
+The TypeScript `paths` mapping resolves `@lib/*` to `lib/*`. Each directory under
+`lib` is also a private npm workspace (for example, `@lib/shared`), so `npm ci`
+creates the package links that Node and Vercel need at runtime. Keep the `.js`
+extensions for ESM imports, and run dependency installation from the repository
+root. When adding a new top-level library directory, give it a matching private
+workspace `package.json` and refresh `package-lock.json` with `npm install`.
+
+TypeScript does not rewrite these aliases during emit. Deployment uses Vercel's
+Node builder, which includes the workspace links and compiled library modules;
+plain `tsc` output in `dist` needs equivalent installed package links to run.
+
 ## Content Generation APIs
 
 ### Spanish Tips (`/api/spanish-tips`)

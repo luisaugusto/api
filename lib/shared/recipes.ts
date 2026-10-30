@@ -1,9 +1,9 @@
 import { Client, CreatePageParameters } from "@notionhq/client";
 import { markdownToBlocks, markdownToRichText } from "@tryfabric/martian";
 import type { Block } from "@tryfabric/martian/build/src/notion/blocks.js";
-import Recipe from "../recipes/schema.js";
-import { generateImage } from "./openai.js";
-import { uploadImageToNotion } from "./notion.js";
+import Recipe from "@lib/recipes/schema.js";
+import { generateImage } from "@lib/shared/openai.js";
+import { uploadImageToNotion } from "@lib/shared/notion.js";
 import { zodTextFormat } from "openai/helpers/zod";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -3,11 +3,11 @@ import {
   addCommentToNotionPage,
   convertToBlockObjectRequest,
   createNotionPage,
-} from "../../lib/shared/notion.js";
-import { setResponse, verifyParam } from "../../lib/shared/utils.js";
+} from "@lib/shared/notion.js";
+import { setResponse, verifyParam } from "@lib/shared/utils.js";
 import type { Block } from "@tryfabric/martian/build/src/notion/blocks.js";
-import Tip from "../../lib/spanish-tips/schema.js";
-import { generateData } from "../../lib/shared/openai.js";
+import Tip from "@lib/spanish-tips/schema.js";
+import { generateData } from "@lib/shared/openai.js";
 import { markdownToBlocks } from "@tryfabric/martian";
 import { waitUntil } from "@vercel/functions";
 import { zodTextFormat } from "openai/helpers/zod";
