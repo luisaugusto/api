@@ -24,6 +24,8 @@ export const generateImage = async (prompt: string): Promise<string> => {
   }
 };
 
+const STRUCTURED_OUTPUT_MODEL = "gpt-6.1-sol";
+
 export const generateData = async <T extends ResponseFormatTextConfig>({
   input,
   instructions,
@@ -38,7 +40,7 @@ export const generateData = async <T extends ResponseFormatTextConfig>({
       ExtractParsedContentFromParams<{
         input: string;
         instructions: string;
-        model: "gpt-5-mini";
+        model: typeof STRUCTURED_OUTPUT_MODEL;
         text: { format: T };
       }>
     >["output_parsed"]
@@ -49,7 +51,7 @@ export const generateData = async <T extends ResponseFormatTextConfig>({
     const response = await openai.responses.parse({
       input,
       instructions,
-      model: "gpt-5-mini",
+      model: STRUCTURED_OUTPUT_MODEL,
       text: { format },
     });
 
